@@ -108,6 +108,8 @@ const _ANIM = `
     from { stroke-dashoffset: 32; }
     to   { stroke-dashoffset: 0;  }
   }
+  input, textarea { transition: border-color 0.15s, box-shadow 0.15s; }
+  input:focus, textarea:focus { outline: none; border-color: #1565C0 !important; box-shadow: 0 0 0 3px rgba(21,101,192,0.12); }
 `;
 const GlobalStyles = () => <style>{_ANIM}</style>;
 
@@ -133,15 +135,22 @@ const Tap = ({ children }) => {
 };
 
 // ─── Avatar pieces ───────────────────────────────────────────
-const Avatar = ({ p, size = 30, ring = false, ringColor = '#fff' }) => (
-  <div style={{
-    width: size, height: size, borderRadius: '50%', background: p.color,
-    color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontWeight: 700, fontSize: size * 0.42,
-    border: ring ? `2px solid ${ringColor}` : 'none',
-    flexShrink: 0,
-  }}>{p.initial}</div>
-);
+const Avatar = ({ p, size = 30, ring = false, ringColor = '#fff' }) => {
+  if (p.photoURL) return (
+    <img src={p.photoURL} alt={p.name || p.initial}
+      style={{ width:size, height:size, borderRadius:'50%', objectFit:'cover', flexShrink:0,
+        border: ring ? `2px solid ${ringColor}` : 'none' }}
+    />
+  );
+  return (
+    <div style={{
+      width:size, height:size, borderRadius:'50%', background: p.color || '#888',
+      color:'#fff', display:'flex', alignItems:'center', justifyContent:'center',
+      fontWeight:700, fontSize:size * 0.42,
+      border: ring ? `2px solid ${ringColor}` : 'none', flexShrink:0,
+    }}>{p.initial}</div>
+  );
+};
 
 const AvatarStack = ({ people, size = 28, max = 4, bg = '#fff' }) => {
   const shown = people.slice(0, max);
@@ -341,9 +350,161 @@ const Screen0_Login = () => {
 };
 
 // ═════════════════════════════════════════════════════════════
+// SCREEN NEW TRIP — Crear o unirse a un viaje
+// ═════════════════════════════════════════════════════════════
+const ScreenNewTrip = ({ currentUser, onTripReady }) => {
+  const [mode, setMode]         = React.useState(null); // null | 'create' | 'join'
+  const [loading, setLoading]   = React.useState(false);
+  const [error, setError]       = React.useState(null);
+  const [tripName, setTripName] = React.useState('');
+  const [dest, setDest]         = React.useState('');
+  const [startDate, setStart]   = React.useState('');
+  const [endDate, setEnd]       = React.useState('');
+  const [code, setCode]         = React.useState('');
+
+  const firstName = currentUser?.displayName?.split(' ')[0] || 'viajero';
+
+  const inp = {
+    width:'100%', padding:'13px 16px', borderRadius:14,
+    border:`1.5px solid ${PAL.line}`, fontSize:15, fontFamily:FONT,
+    background:PAL.white, color:PAL.ink, boxSizing:'border-box',
+  };
+
+  const handleCreate = async () => {
+    if (!tripName.trim()) { setError('Ponele un nombre al viaje.'); return; }
+    setLoading(true); setError(null);
+    try {
+      const id = await createTrip({ name:tripName.trim(), destination:dest.trim(), startDate:startDate.trim(), endDate:endDate.trim() }, currentUser);
+      onTripReady(id);
+    } catch(e) { setError('No se pudo crear. Intentá de nuevo.'); setLoading(false); }
+  };
+
+  const handleJoin = async () => {
+    if (code.trim().length < 4) { setError('Ingresá el código de invitación.'); return; }
+    setLoading(true); setError(null);
+    try {
+      const id = await joinTrip(code.trim(), currentUser);
+      onTripReady(id);
+    } catch(e) { setError(e.message || 'Código inválido.'); setLoading(false); }
+  };
+
+  if (mode === 'create') return (
+    <Phone bg={PAL.bg}>
+      <div style={{ padding:'12px 18px', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
+        <div onClick={() => { setMode(null); setError(null); }} style={{ width:38, height:38, borderRadius:11, background:PAL.white, border:`1px solid ${PAL.line}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <Icon name="back" size={18} color={PAL.ink}/>
+        </div>
+        <div style={{ fontSize:17, fontWeight:700 }}>Nuevo viaje</div>
+      </div>
+      <div style={{ flex:1, padding:'8px 20px', display:'flex', flexDirection:'column', gap:16, overflow:'hidden' }}>
+        <div>
+          <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:8 }}>Nombre del viaje *</div>
+          <input style={inp} placeholder="Ej: Patagonia con los pibes" value={tripName} onChange={e => setTripName(e.target.value)}/>
+        </div>
+        <div>
+          <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:8 }}>Destino</div>
+          <input style={inp} placeholder="Ej: Bariloche" value={dest} onChange={e => setDest(e.target.value)}/>
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+          <div>
+            <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:8 }}>Desde</div>
+            <input style={inp} placeholder="14 feb 2026" value={startDate} onChange={e => setStart(e.target.value)}/>
+          </div>
+          <div>
+            <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:8 }}>Hasta</div>
+            <input style={inp} placeholder="25 feb 2026" value={endDate} onChange={e => setEnd(e.target.value)}/>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding:'12px 20px 22px', flexShrink:0 }}>
+        {error && <div style={{ fontSize:12, color:PAL.red, marginBottom:10, textAlign:'center', fontWeight:600 }}>{error}</div>}
+        <div onClick={loading ? undefined : handleCreate} style={{ background:loading ? PAL.line : PAL.blue, color:'#fff', borderRadius:16, padding:'15px', textAlign:'center', fontWeight:700, fontSize:15, cursor:loading?'default':'pointer', boxShadow:loading?'none':'0 10px 24px -6px rgba(21,101,192,0.4)' }}>
+          {loading ? 'Creando viaje…' : 'Crear viaje'}
+        </div>
+      </div>
+    </Phone>
+  );
+
+  if (mode === 'join') return (
+    <Phone bg={PAL.bg}>
+      <div style={{ padding:'12px 18px', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
+        <div onClick={() => { setMode(null); setError(null); }} style={{ width:38, height:38, borderRadius:11, background:PAL.white, border:`1px solid ${PAL.line}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <Icon name="back" size={18} color={PAL.ink}/>
+        </div>
+        <div style={{ fontSize:17, fontWeight:700 }}>Unirme a un viaje</div>
+      </div>
+      <div style={{ flex:1, padding:'40px 28px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:24 }}>
+        <div style={{ width:80, height:80, borderRadius:24, background:PAL.orangeSoft, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <Icon name="users" size={38} color={PAL.orange}/>
+        </div>
+        <div style={{ textAlign:'center' }}>
+          <div style={{ fontSize:20, fontWeight:700, marginBottom:6 }}>Código de invitación</div>
+          <div style={{ fontSize:14, color:PAL.inkSoft, lineHeight:1.5 }}>Pedíselo a quien creó el viaje.<br/>Son 6 caracteres.</div>
+        </div>
+        <input
+          style={{ ...inp, textAlign:'center', fontSize:28, fontWeight:800, letterSpacing:8, textTransform:'uppercase', width:'100%' }}
+          placeholder="ABC123" maxLength={6}
+          value={code} onChange={e => setCode(e.target.value.toUpperCase())}
+        />
+      </div>
+      <div style={{ padding:'12px 20px 22px', flexShrink:0 }}>
+        {error && <div style={{ fontSize:12, color:PAL.red, marginBottom:10, textAlign:'center', fontWeight:600 }}>{error}</div>}
+        <div onClick={loading ? undefined : handleJoin} style={{ background:loading ? PAL.line : PAL.orange, color:'#fff', borderRadius:16, padding:'15px', textAlign:'center', fontWeight:700, fontSize:15, cursor:loading?'default':'pointer', boxShadow:loading?'none':'0 10px 24px -6px rgba(255,107,53,0.5)' }}>
+          {loading ? 'Uniéndome…' : 'Unirme al viaje'}
+        </div>
+      </div>
+    </Phone>
+  );
+
+  return (
+    <Phone bg={PAL.bg}>
+      <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center', padding:'0 24px', gap:20 }}>
+        <div style={{ textAlign:'center', marginBottom:8 }}>
+          <div style={{ fontSize:26, fontWeight:800, letterSpacing:-0.5 }}>¡Hola, {firstName}!</div>
+          <div style={{ fontSize:14, color:PAL.inkSoft, marginTop:8, lineHeight:1.6 }}>No tenés ningún viaje activo.<br/>¿Querés crear uno o unirte?</div>
+        </div>
+        {[
+          { mode:'create', icon:'plus',  color:PAL.blue,   bg:PAL.blueSoft,   title:'Crear un viaje',       sub:'Vos sos el admin. Invitás al resto.' },
+          { mode:'join',   icon:'users', color:PAL.orange, bg:PAL.orangeSoft, title:'Unirme a un viaje',    sub:'Necesitás el código de invitación.' },
+        ].map(opt => (
+          <div key={opt.mode} onClick={() => setMode(opt.mode)} style={{ background:PAL.white, borderRadius:20, padding:'20px', border:`1px solid ${PAL.line}`, cursor:'pointer', display:'flex', alignItems:'center', gap:16, boxShadow:'0 4px 16px rgba(0,0,0,0.06)' }}>
+            <div style={{ width:56, height:56, borderRadius:18, background:opt.bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <Icon name={opt.icon} size={26} color={opt.color} stroke={2.2}/>
+            </div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:16, fontWeight:700 }}>{opt.title}</div>
+              <div style={{ fontSize:13, color:PAL.inkSoft, marginTop:3 }}>{opt.sub}</div>
+            </div>
+            <Icon name="chevR" size={18} color={PAL.inkSoft}/>
+          </div>
+        ))}
+      </div>
+    </Phone>
+  );
+};
+
+// ═════════════════════════════════════════════════════════════
 // SCREEN 1 — Trips hub (próximos)
 // ═════════════════════════════════════════════════════════════
-const Screen1_Trips = ({ navigate = () => {} }) => (
+const Screen1_Trips = ({ navigate = () => {}, currentUser = null, currentTrip = null }) => {
+  const firstName   = currentUser?.displayName?.split(' ')[0] || 'viajero';
+  const tripName    = currentTrip?.name        || 'Mi viaje';
+  const tripDest    = currentTrip?.destination || '';
+  const tripDates   = [currentTrip?.startDate, currentTrip?.endDate].filter(Boolean).join(' al ');
+  const memberCount = Object.keys(currentTrip?.members || {}).length;
+  const memberNames = Object.values(currentTrip?.members || {})
+    .filter(m => m.name !== currentUser?.displayName)
+    .slice(0, 3)
+    .map(m => m.name.split(' ')[0])
+    .join(', ');
+  // Build avatar people from trip members
+  const COLORS = ['#FF6B35','#1FA2D8','#F4B941','#2E9E6A','#9C6FDE','#E94B7D'];
+  const tripPeople = Object.entries(currentTrip?.members || {}).map(([uid, m], i) => ({
+    id: uid, name: m.name, photoURL: m.photoURL, initial: m.name.charAt(0).toUpperCase(),
+    color: COLORS[i % COLORS.length], me: uid === currentUser?.uid,
+  }));
+
+  return (
   <Phone>
     <div style={{
       background: PAL.blue, color: '#fff', padding: '18px 24px 70px',
@@ -351,7 +512,7 @@ const Screen1_Trips = ({ navigate = () => {} }) => (
     }}>
       <div style={{ position: 'absolute', right: -40, top: -40, width: 160, height: 160, borderRadius: '50%', background: PAL.orange, opacity: 0.18 }}/>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-        <div style={{ fontSize: 13, fontWeight: 500, opacity: 0.85, letterSpacing: 0.4, textTransform: 'uppercase' }}>hola, Luna</div>
+        <div style={{ fontSize: 13, fontWeight: 500, opacity: 0.85, letterSpacing: 0.4, textTransform: 'uppercase' }}>hola, {firstName}</div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <Shake>
             <div style={{ position: 'relative' }}>
@@ -376,10 +537,10 @@ const Screen1_Trips = ({ navigate = () => {} }) => (
           <div style={{ flex: 1 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: PAL.orangeSoft, color: PAL.orangeInk, padding: '4px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase' }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: PAL.orange }}/>
-              En 12 días
+              Activo
             </div>
-            <div style={{ fontSize: 22, fontWeight: 700, marginTop: 10, letterSpacing: -0.3 }}>Patagonia · verano</div>
-            <div style={{ fontSize: 13, color: PAL.inkSoft, marginTop: 2 }}>14 al 25 feb · Bariloche & El Bolsón</div>
+            <div style={{ fontSize: 22, fontWeight: 700, marginTop: 10, letterSpacing: -0.3 }}>{tripName}</div>
+            <div style={{ fontSize: 13, color: PAL.inkSoft, marginTop: 2 }}>{[tripDates, tripDest].filter(Boolean).join(' · ')}</div>
           </div>
         </div>
 
@@ -388,10 +549,10 @@ const Screen1_Trips = ({ navigate = () => {} }) => (
           marginTop: 14, padding: '12px 14px', borderRadius: 14, background: PAL.bg,
           display: 'flex', alignItems: 'center', gap: 12,
         }}>
-          <AvatarStack people={GROUP} size={30} bg={PAL.bg}/>
+          <AvatarStack people={tripPeople} size={30} bg={PAL.bg}/>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: PAL.ink }}>4 viajeros</div>
-            <div style={{ fontSize: 11, color: PAL.inkSoft }}>Tomás, Cami, Mateo + vos</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: PAL.ink }}>{memberCount} viajero{memberCount !== 1 ? 's' : ''}</div>
+            <div style={{ fontSize: 11, color: PAL.inkSoft }}>{memberNames || 'Solo vos por ahora'}</div>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 18, fontWeight: 700, color: PAL.blueDeep, letterSpacing: -0.3 }}>9</div>
@@ -454,7 +615,8 @@ const Screen1_Trips = ({ navigate = () => {} }) => (
       if (k === 'map')   navigate('map');
     }}/>
   </Phone>
-);
+  );
+};
 
 // ═════════════════════════════════════════════════════════════
 // SCREEN 2 — Trip plan (itinerary, collaborative)
@@ -1234,90 +1396,88 @@ const Screen7_Profile = ({ navigate = () => {}, currentUser = null }) => {
 // ═════════════════════════════════════════════════════════════
 // SCREEN 8 — Grupo
 // ═════════════════════════════════════════════════════════════
-const Screen8_Group = ({ navigate = () => {} }) => {
-  const ME = GROUP[0];
-  const isAdmin = ME.me;
-
-  const [members, setMembers] = React.useState([
-    { ...GROUP[0], role: 'admin' },
-    { ...GROUP[1], role: 'miembro' },
-    { ...GROUP[2], role: 'miembro' },
-    { ...GROUP[3], role: 'miembro' },
-  ]);
-  const [copied, setCopied] = React.useState(false);
+const Screen8_Group = ({ navigate = () => {}, currentUser = null, currentTrip = null, onTripUpdate = () => {} }) => {
+  const COLORS = ['#FF6B35','#1FA2D8','#F4B941','#2E9E6A','#9C6FDE','#E94B7D'];
+  const members = Object.entries(currentTrip?.members || {}).map(([uid, m], i) => ({
+    id: uid, name: m.name, photoURL: m.photoURL || null,
+    initial: m.name.charAt(0).toUpperCase(), color: COLORS[i % COLORS.length],
+    role: m.role, me: uid === currentUser?.uid,
+  }));
+  const isAdmin = currentTrip?.members?.[currentUser?.uid]?.role === 'admin';
+  const [copied,   setCopied]   = React.useState(false);
   const [removing, setRemoving] = React.useState(null);
+  const [removing2, setRemoving2] = React.useState(false);
 
-  const removeMember = id => {
-    setMembers(ms => ms.filter(m => m.id !== id));
-    setRemoving(null);
+  const handleRemove = async (uid) => {
+    setRemoving2(true);
+    try {
+      await removeTripMember(currentTrip.id, uid);
+      const newMembers   = { ...currentTrip.members };
+      delete newMembers[uid];
+      const newMemberIds = (currentTrip.memberIds || []).filter(id => id !== uid);
+      onTripUpdate({ ...currentTrip, members: newMembers, memberIds: newMemberIds });
+    } finally { setRemoving(null); setRemoving2(false); }
   };
 
   const handleCopy = () => {
+    navigator.clipboard?.writeText(currentTrip?.inviteCode || '').catch(() => {});
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   return (
     <Phone bg={PAL.bg}>
-      {/* Header */}
-      <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10, background: PAL.white, borderBottom: `1px solid ${PAL.line}`, flexShrink: 0 }}>
+      <div style={{ padding:'10px 16px', display:'flex', alignItems:'center', gap:10, background:PAL.white, borderBottom:`1px solid ${PAL.line}`, flexShrink:0 }}>
         <Tap>
-          <div onClick={() => navigate('home')} style={{ width: 40, height: 40, borderRadius: 12, background: PAL.bg, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <div onClick={() => navigate('home')} style={{ width:40, height:40, borderRadius:12, background:PAL.bg, border:`1px solid ${PAL.line}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
             <Icon name="back" size={20} color={PAL.ink}/>
           </div>
         </Tap>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, color: PAL.inkSoft, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.4 }}>Patagonia · verano</div>
-          <div style={{ fontSize: 17, fontWeight: 700 }}>Grupo</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:11, color:PAL.inkSoft, fontWeight:600, textTransform:'uppercase', letterSpacing:0.4 }}>{currentTrip?.name || 'Mi viaje'}</div>
+          <div style={{ fontSize:17, fontWeight:700 }}>Grupo</div>
         </div>
-        <div style={{ fontSize: 12, fontWeight: 700, color: PAL.white, background: PAL.blue, padding: '4px 10px', borderRadius: 100 }}>
-          {members.length} miembros
+        <div style={{ fontSize:12, fontWeight:700, color:'#fff', background:PAL.blue, padding:'4px 10px', borderRadius:100 }}>
+          {members.length} miembro{members.length !== 1 ? 's' : ''}
         </div>
       </div>
 
-      {/* Contenido */}
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 16, padding: '16px 20px' }}>
-
-        {/* Lista de integrantes */}
+      <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', gap:16, padding:'16px 20px' }}>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 10 }}>Integrantes</div>
-          <div style={{ background: PAL.white, borderRadius: 16, border: `1px solid ${PAL.line}`, overflow: 'hidden' }}>
+          <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.7, marginBottom:10 }}>Integrantes</div>
+          <div style={{ background:PAL.white, borderRadius:16, border:`1px solid ${PAL.line}`, overflow:'hidden' }}>
             {members.map((m, i) => (
               <div key={m.id}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: removing === m.id ? 'none' : (i < members.length - 1 ? `1px solid ${PAL.line}` : 'none') }}>
-                  {/* Avatar con color asignado */}
-                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 17, color: '#fff', flexShrink: 0, boxShadow: `0 2px 8px ${m.color}55` }}>
-                    {m.initial}
+                <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderBottom: removing === m.id ? 'none' : (i < members.length-1 ? `1px solid ${PAL.line}` : 'none') }}>
+                  <div style={{ position:'relative', flexShrink:0 }}>
+                    <Avatar p={m} size={44}/>
+                    <div style={{ position:'absolute', bottom:0, right:0, width:12, height:12, borderRadius:'50%', background: m.role==='admin' ? PAL.orange : PAL.green, border:`2px solid #fff` }}/>
                   </div>
-                  {/* Info */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700 }}>{m.name}</span>
-                      {m.me && <span style={{ fontSize: 10, color: PAL.inkSoft, fontWeight: 500 }}>(vos)</span>}
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                      <span style={{ fontSize:14, fontWeight:700 }}>{m.name}</span>
+                      {m.me && <span style={{ fontSize:10, color:PAL.inkSoft }}>(vos)</span>}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
-                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: m.color }}/>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: m.role === 'admin' ? PAL.orange : PAL.inkSoft, textTransform: 'capitalize' }}>{m.role}</span>
-                    </div>
+                    <span style={{ fontSize:11, fontWeight:600, color: m.role==='admin' ? PAL.orangeInk : PAL.inkSoft, textTransform:'capitalize' }}>{m.role}</span>
                   </div>
-                  {/* Eliminar — solo admin, solo otros miembros */}
                   {isAdmin && !m.me && (
                     removing === m.id ? (
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <div onClick={() => removeMember(m.id)} style={{ padding: '5px 10px', borderRadius: 8, background: PAL.red, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Eliminar</div>
-                        <div onClick={() => setRemoving(null)} style={{ padding: '5px 10px', borderRadius: 8, background: PAL.bg, border: `1px solid ${PAL.line}`, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>No</div>
+                      <div style={{ display:'flex', gap:6 }}>
+                        <div onClick={() => handleRemove(m.id)} style={{ padding:'5px 10px', borderRadius:8, background:PAL.red, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', opacity: removing2 ? 0.6 : 1 }}>
+                          {removing2 ? '…' : 'Eliminar'}
+                        </div>
+                        <div onClick={() => setRemoving(null)} style={{ padding:'5px 10px', borderRadius:8, background:PAL.bg, border:`1px solid ${PAL.line}`, fontSize:11, fontWeight:700, cursor:'pointer' }}>No</div>
                       </div>
                     ) : (
-                      <div onClick={() => setRemoving(m.id)} style={{ width: 32, height: 32, borderRadius: 9, background: '#FBE5E5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      <div onClick={() => setRemoving(m.id)} style={{ width:32, height:32, borderRadius:9, background:'#FBE5E5', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
                         <Icon name="trash" size={15} color={PAL.red}/>
                       </div>
                     )
                   )}
                 </div>
-                {/* Confirmación inline */}
                 {removing === m.id && (
-                  <div style={{ padding: '8px 16px 12px', background: '#FBE5E5', borderBottom: i < members.length - 1 ? `1px solid ${PAL.line}` : 'none' }}>
-                    <span style={{ fontSize: 12, color: PAL.red, fontWeight: 600 }}>¿Eliminar a {m.name} del grupo?</span>
+                  <div style={{ padding:'8px 16px 12px', background:'#FBE5E5' }}>
+                    <span style={{ fontSize:12, color:PAL.red, fontWeight:600 }}>¿Eliminar a {m.name} del grupo?</span>
                   </div>
                 )}
               </div>
@@ -1325,26 +1485,26 @@ const Screen8_Group = ({ navigate = () => {} }) => {
           </div>
         </div>
 
-        {/* Link de invitación */}
         {isAdmin && (
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 10 }}>Invitar al grupo</div>
-            <div style={{ background: PAL.white, borderRadius: 16, border: `1px solid ${PAL.line}`, padding: '14px 16px' }}>
-              <div style={{ fontSize: 12, color: PAL.inkSoft, marginBottom: 10 }}>Compartí este link para que alguien se una al viaje.</div>
-              <div style={{ background: PAL.bg, borderRadius: 10, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, border: `1px solid ${PAL.line}` }}>
-                <Icon name="tag" size={14} color={PAL.inkSoft}/>
-                <span style={{ fontSize: 12, color: PAL.inkSoft, flex: 1, fontFamily: 'monospace' }}>viajechucu.app/unirse/PAT-2026</span>
+            <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.7, marginBottom:10 }}>Invitar al grupo</div>
+            <div style={{ background:PAL.white, borderRadius:16, border:`1px solid ${PAL.line}`, padding:'14px 16px' }}>
+              <div style={{ fontSize:12, color:PAL.inkSoft, marginBottom:12 }}>Compartí el código para que alguien se una.</div>
+              <div style={{ background:PAL.bg, borderRadius:12, padding:'14px', textAlign:'center', marginBottom:12, border:`1px solid ${PAL.line}` }}>
+                <div style={{ fontSize:11, color:PAL.inkSoft, fontWeight:600, marginBottom:4 }}>CÓDIGO DE INVITACIÓN</div>
+                <div style={{ fontSize:32, fontWeight:900, letterSpacing:8, color:PAL.blue, fontFamily:'monospace' }}>
+                  {currentTrip?.inviteCode || '------'}
+                </div>
               </div>
               <Tap>
-                <div onClick={handleCopy} style={{ background: copied ? PAL.green : PAL.blue, color: '#fff', borderRadius: 12, padding: '12px', textAlign: 'center', fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'background 0.2s' }}>
+                <div onClick={handleCopy} style={{ background: copied ? PAL.green : PAL.blue, color:'#fff', borderRadius:12, padding:'12px', textAlign:'center', fontWeight:700, fontSize:14, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, transition:'background 0.2s' }}>
                   <Icon name={copied ? 'check' : 'sparkle'} size={16} color="#fff"/>
-                  {copied ? '¡Link copiado!' : 'Copiar link de invitación'}
+                  {copied ? '¡Código copiado!' : 'Copiar código'}
                 </div>
               </Tap>
             </div>
           </div>
         )}
-
       </div>
 
       <TabBar active="group" onTab={k => {
@@ -1765,7 +1925,7 @@ const ScreenMap = ({ navigate = () => {} }) => {
 };
 
 Object.assign(window, {
-  Screen0_Login,
+  Screen0_Login, ScreenNewTrip,
   Screen1_Trips, Screen2_Plan, Screen3_TypePick,
   Screen4_Form, Screen5_Invite, Screen6_Posted,
   Screen7_Profile, Screen8_Group, Screen9_ActivityDetail,

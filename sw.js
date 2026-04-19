@@ -5,13 +5,10 @@ const SHELL = [
   '/icon.svg',
   '/app.jsx',
   '/screens.jsx',
-  '/design-canvas.jsx',
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(SHELL))
-  );
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));
   self.skipWaiting();
 });
 
@@ -24,8 +21,15 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
+// Network-first: siempre intenta la red, cae al cache solo si no hay conexión
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+    fetch(e.request)
+      .then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, copy));
+        return res;
+      })
+      .catch(() => caches.match(e.request))
   );
 });

@@ -79,49 +79,6 @@ const Icon = ({ name, size = 22, color = 'currentColor', stroke = 1.8 }) => {
   );
 };
 
-// ─── Animation helpers ───────────────────────────────────────
-const _ANIM = `
-  @keyframes shake {
-    0%,100% { transform: translateX(0) rotate(0deg); }
-    15%      { transform: translateX(-5px) rotate(-1.5deg); }
-    30%      { transform: translateX(5px)  rotate(1.5deg); }
-    45%      { transform: translateX(-4px); }
-    60%      { transform: translateX(4px); }
-    78%      { transform: translateX(-2px); }
-    92%      { transform: translateX(2px); }
-  }
-  @keyframes tap {
-    0%   { transform: scale(1); }
-    45%  { transform: scale(0.91); }
-    100% { transform: scale(1); }
-  }
-  @keyframes caret { 0%,50% { opacity: 1 } 51%,100% { opacity: 0 } }
-`;
-const GlobalStyles = () => <style>{_ANIM}</style>;
-
-// Shake: wraps a non-functional element — vibrates on click
-const Shake = ({ children }) => {
-  const [on, setOn] = React.useState(false);
-  const child = React.Children.only(children);
-  const go = () => { if (on) return; setOn(true); setTimeout(() => setOn(false), 480); };
-  return React.cloneElement(child, {
-    onClick: go,
-    style: { ...child.props.style, animation: on ? 'shake 0.45s ease' : undefined, cursor: 'not-allowed' },
-  });
-};
-
-// Tap: wraps a functional element — scales down on click then executes
-const Tap = ({ children }) => {
-  const [on, setOn] = React.useState(false);
-  const child = React.Children.only(children);
-  const orig = child.props.onClick;
-  const go = (e) => { setOn(true); setTimeout(() => setOn(false), 200); orig?.(e); };
-  return React.cloneElement(child, {
-    onClick: go,
-    style: { ...child.props.style, animation: on ? 'tap 0.2s ease' : undefined },
-  });
-};
-
 // ─── Avatar pieces ───────────────────────────────────────────
 const Avatar = ({ p, size = 30, ring = false, ringColor = '#fff' }) => (
   <div style={{
@@ -229,27 +186,23 @@ const TabBar = ({ active = 'plan', onTab = () => {} }) => {
       {tabs.map(t => {
         const isA = t.k === active;
         if (t.fab) return (
-          <Tap key={t.k}>
-            <div onClick={() => onTab(t.k)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, marginTop: -22, cursor: 'pointer' }}>
-              <div style={{
-                width: 54, height: 54, borderRadius: 18, background: PAL.orange,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 10px 20px -4px rgba(255,107,53,0.5), 0 4px 8px rgba(255,107,53,0.25)',
-                color: '#fff',
-              }}>
-                <Icon name="plus" size={26} color="#fff" stroke={2.4}/>
-              </div>
-              <span style={{ fontSize: 10, fontWeight: 600, color: PAL.orangeInk, letterSpacing: 0.2 }}>{t.label}</span>
+          <div key={t.k} onClick={() => onTab(t.k)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, marginTop: -22, cursor: 'pointer' }}>
+            <div style={{
+              width: 54, height: 54, borderRadius: 18, background: PAL.orange,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 10px 20px -4px rgba(255,107,53,0.5), 0 4px 8px rgba(255,107,53,0.25)',
+              color: '#fff',
+            }}>
+              <Icon name="plus" size={26} color="#fff" stroke={2.4}/>
             </div>
-          </Tap>
+            <span style={{ fontSize: 10, fontWeight: 600, color: PAL.orangeInk, letterSpacing: 0.2 }}>{t.label}</span>
+          </div>
         );
         return (
-          <Shake key={t.k}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 54 }}>
-              <Icon name={t.icon} size={22} color={isA ? PAL.blue : PAL.inkSoft} stroke={isA ? 2.2 : 1.8}/>
-              <span style={{ fontSize: 10, fontWeight: isA ? 700 : 500, color: isA ? PAL.blue : PAL.inkSoft }}>{t.label}</span>
-            </div>
-          </Shake>
+          <div key={t.k} onClick={() => onTab(t.k)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 54, cursor: 'pointer' }}>
+            <Icon name={t.icon} size={22} color={isA ? PAL.blue : PAL.inkSoft} stroke={isA ? 2.2 : 1.8}/>
+            <span style={{ fontSize: 10, fontWeight: isA ? 700 : 500, color: isA ? PAL.blue : PAL.inkSoft }}>{t.label}</span>
+          </div>
         );
       })}
     </div>
@@ -269,12 +222,10 @@ const Screen1_Trips = ({ navigate = () => {} }) => (
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
         <div style={{ fontSize: 13, fontWeight: 500, opacity: 0.85, letterSpacing: 0.4, textTransform: 'uppercase' }}>hola, Luna</div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <Shake>
-            <div style={{ position: 'relative' }}>
-              <Icon name="bell" size={22} color="#fff"/>
-              <div style={{ position: 'absolute', top: -3, right: -3, width: 10, height: 10, borderRadius: '50%', background: PAL.orange, border: '2px solid #1FA2D8' }}/>
-            </div>
-          </Shake>
+          <div style={{ position: 'relative' }}>
+            <Icon name="bell" size={22} color="#fff"/>
+            <div style={{ position: 'absolute', top: -3, right: -3, width: 10, height: 10, borderRadius: '50%', background: PAL.orange, border: '2px solid #1FA2D8' }}/>
+          </div>
           <Avatar p={GROUP[0]} size={36}/>
         </div>
       </div>
@@ -317,16 +268,12 @@ const Screen1_Trips = ({ navigate = () => {} }) => (
 
         {/* CTAs */}
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-          <Tap>
-            <div onClick={() => navigate('plan')} style={{ flex: 1, background: PAL.blue, color: '#fff', borderRadius: 12, padding: '11px 12px', fontWeight: 700, fontSize: 13, textAlign: 'center', cursor: 'pointer' }}>
-              Ver plan del viaje
-            </div>
-          </Tap>
-          <Shake>
-            <div style={{ background: PAL.white, border: `1px solid ${PAL.line}`, borderRadius: 12, padding: '11px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="msg" size={18} color={PAL.ink}/>
-            </div>
-          </Shake>
+          <div onClick={() => navigate('plan')} style={{ flex: 1, background: PAL.blue, color: '#fff', borderRadius: 12, padding: '11px 12px', fontWeight: 700, fontSize: 13, textAlign: 'center', cursor: 'pointer' }}>
+            Ver plan del viaje
+          </div>
+          <div style={{ background: PAL.white, border: `1px solid ${PAL.line}`, borderRadius: 12, padding: '11px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="msg" size={18} color={PAL.ink}/>
+          </div>
         </div>
       </div>
     </div>
@@ -334,7 +281,7 @@ const Screen1_Trips = ({ navigate = () => {} }) => (
     {/* Recent activity in the group */}
     <div style={{ padding: '24px 24px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
       <div style={{ fontSize: 16, fontWeight: 700 }}>Movimientos del grupo</div>
-      <Shake><div style={{ fontSize: 12, color: PAL.blueDeep, fontWeight: 600 }}>Ver todo</div></Shake>
+      <div style={{ fontSize: 12, color: PAL.blueDeep, fontWeight: 600 }}>Ver todo</div>
     </div>
     <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1, overflow: 'hidden' }}>
       {[
@@ -417,11 +364,9 @@ const Screen2_Plan = ({ navigate = () => {} }) => {
     <Phone bg={PAL.bg}>
       {/* Top bar */}
       <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Tap>
-          <div onClick={() => navigate('home')} style={{ width: 40, height: 40, borderRadius: 12, background: PAL.white, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <Icon name="back" size={20} color={PAL.ink}/>
-          </div>
-        </Tap>
+        <div onClick={() => navigate('home')} style={{ width: 40, height: 40, borderRadius: 12, background: PAL.white, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <Icon name="back" size={20} color={PAL.ink}/>
+        </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 11, color: PAL.inkSoft, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.4 }}>Patagonia · verano</div>
           <div style={{ fontSize: 17, fontWeight: 700, marginTop: -1 }}>Plan del viaje</div>
@@ -433,20 +378,17 @@ const Screen2_Plan = ({ navigate = () => {} }) => {
       <div style={{ padding: '4px 16px 12px', display: 'flex', gap: 8, overflowX: 'hidden' }}>
         {[14,15,16,17,18,19].map(d => {
           const a = d === 14;
-          const DayEl = a ? Tap : Shake;
           return (
-            <DayEl key={d}>
-              <div style={{
-                flexShrink: 0, width: 52, padding: '10px 0', borderRadius: 14, textAlign: 'center',
-                background: a ? PAL.blue : PAL.white, color: a ? '#fff' : PAL.ink,
-                border: `1px solid ${a ? PAL.blue : PAL.line}`,
-              }}>
-                <div style={{ fontSize: 10, fontWeight: 600, opacity: a ? 0.7 : 0.55, textTransform: 'uppercase' }}>
-                  {['vie','sáb','dom','lun','mar','mié'][d-14]}
-                </div>
-                <div style={{ fontSize: 17, fontWeight: 700, marginTop: 2 }}>{d}</div>
+            <div key={d} style={{
+              flexShrink: 0, width: 52, padding: '10px 0', borderRadius: 14, textAlign: 'center',
+              background: a ? PAL.blue : PAL.white, color: a ? '#fff' : PAL.ink,
+              border: `1px solid ${a ? PAL.blue : PAL.line}`,
+            }}>
+              <div style={{ fontSize: 10, fontWeight: 600, opacity: a ? 0.7 : 0.55, textTransform: 'uppercase' }}>
+                {['vie','sáb','dom','lun','mar','mié'][d-14]}
               </div>
-            </DayEl>
+              <div style={{ fontSize: 17, fontWeight: 700, marginTop: 2 }}>{d}</div>
+            </div>
           );
         })}
       </div>
@@ -504,8 +446,8 @@ const Screen2_Plan = ({ navigate = () => {} }) => {
 
             {/* Right: edit/delete */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <Shake><div style={{ display: 'flex' }}><Icon name="edit" size={16} color={PAL.inkSoft}/></div></Shake>
-              <Shake><div style={{ display: 'flex' }}><Icon name="trash" size={16} color={PAL.inkSoft}/></div></Shake>
+              <Icon name="edit" size={16} color={PAL.inkSoft}/>
+              <Icon name="trash" size={16} color={PAL.inkSoft}/>
             </div>
           </div>
         ))}
@@ -513,18 +455,16 @@ const Screen2_Plan = ({ navigate = () => {} }) => {
 
       {/* Floating add */}
       <div style={{ padding: '0 20px 14px' }}>
-        <Tap>
-          <div onClick={() => navigate('type-pick')} style={{
-            background: PAL.orange, color: '#fff', borderRadius: 16, padding: '14px',
-            textAlign: 'center', fontWeight: 700, fontSize: 15,
-            boxShadow: '0 10px 24px -6px rgba(255,107,53,0.55)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            cursor: 'pointer',
-          }}>
-            <Icon name="plus" size={18} color="#fff" stroke={2.4}/>
-            Proponer actividad
-          </div>
-        </Tap>
+        <div onClick={() => navigate('type-pick')} style={{
+          background: PAL.orange, color: '#fff', borderRadius: 16, padding: '14px',
+          textAlign: 'center', fontWeight: 700, fontSize: 15,
+          boxShadow: '0 10px 24px -6px rgba(255,107,53,0.55)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          cursor: 'pointer',
+        }}>
+          <Icon name="plus" size={18} color="#fff" stroke={2.4}/>
+          Proponer actividad
+        </div>
       </div>
     </Phone>
   );
@@ -609,11 +549,9 @@ const Screen3_TypePick = ({ navigate = () => {} }) => {
 const Screen4_Form = ({ navigate = () => {} }) => (
   <Phone bg={PAL.bg}>
     <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-      <Tap>
-        <div onClick={() => navigate('type-pick')} style={{ width: 40, height: 40, borderRadius: 12, background: PAL.white, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-          <Icon name="back" size={20} color={PAL.ink}/>
-        </div>
-      </Tap>
+      <div onClick={() => navigate('type-pick')} style={{ width: 40, height: 40, borderRadius: 12, background: PAL.white, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+        <Icon name="back" size={20} color={PAL.ink}/>
+      </div>
       <div style={{ flex: 1, fontSize: 16, fontWeight: 700 }}>Nueva excursión</div>
       <div style={{ fontSize: 12, fontWeight: 600, color: PAL.inkSoft }}>2 / 3</div>
     </div>
@@ -710,16 +648,15 @@ const Screen4_Form = ({ navigate = () => {} }) => (
     </div>
 
     <div style={{ padding: '8px 20px 16px', background: PAL.bg }}>
-      <Tap>
-        <div onClick={() => navigate('invite')} style={{
-          background: PAL.blue, color: '#fff', borderRadius: 16, padding: '15px',
-          textAlign: 'center', fontWeight: 700, fontSize: 15, letterSpacing: 0.1,
-          boxShadow: '0 10px 24px -6px rgba(31,162,216,0.4)', cursor: 'pointer',
-        }}>
-          Siguiente · invitar al grupo
-        </div>
-      </Tap>
+      <div style={{
+        background: PAL.blue, color: '#fff', borderRadius: 16, padding: '15px',
+        textAlign: 'center', fontWeight: 700, fontSize: 15, letterSpacing: 0.1,
+        boxShadow: '0 10px 24px -6px rgba(31,162,216,0.4)', cursor: 'pointer',
+      }} onClick={() => navigate('invite')}>
+        Siguiente · invitar al grupo
+      </div>
     </div>
+    <style>{`@keyframes caret { 0%,50% { opacity: 1 } 51%,100% { opacity: 0 } }`}</style>
   </Phone>
 );
 
@@ -736,28 +673,21 @@ const Screen5_Invite = ({ navigate = () => {} }) => {
     { p: GROUP[2], note: '' },
     { p: GROUP[3], note: 'lesionado' },
   ];
-  const Pill = ({ pid, value, color, bg, label }) => {
-    const [on, setOn] = React.useState(false);
-    const go = () => { setOn(true); setTimeout(() => setOn(false), 200); setRsvp(r => ({ ...r, [pid]: value })); };
-    return (
-      <div onClick={go} style={{
-        padding: '6px 10px', borderRadius: 10, fontSize: 11, fontWeight: 700,
-        background: rsvp[pid] === value ? bg : 'transparent',
-        color: rsvp[pid] === value ? color : PAL.inkSoft,
-        border: `1px solid ${rsvp[pid] === value ? color : PAL.line}`,
-        letterSpacing: 0.2, textAlign: 'center', minWidth: 38, cursor: 'pointer',
-        animation: on ? 'tap 0.2s ease' : undefined,
-      }}>{label}</div>
-    );
-  };
+  const Pill = ({ pid, value, color, bg, label }) => (
+    <div onClick={() => setRsvp(r => ({ ...r, [pid]: value }))} style={{
+      padding: '6px 10px', borderRadius: 10, fontSize: 11, fontWeight: 700,
+      background: rsvp[pid] === value ? bg : 'transparent',
+      color: rsvp[pid] === value ? color : PAL.inkSoft,
+      border: `1px solid ${rsvp[pid] === value ? color : PAL.line}`,
+      letterSpacing: 0.2, textAlign: 'center', minWidth: 38, cursor: 'pointer',
+    }}>{label}</div>
+  );
   return (
     <Phone bg={PAL.bg}>
       <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <Tap>
-          <div onClick={() => navigate('form')} style={{ width: 40, height: 40, borderRadius: 12, background: PAL.white, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <Icon name="back" size={20} color={PAL.ink}/>
-          </div>
-        </Tap>
+        <div onClick={() => navigate('form')} style={{ width: 40, height: 40, borderRadius: 12, background: PAL.white, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <Icon name="back" size={20} color={PAL.ink}/>
+        </div>
         <div style={{ flex: 1, fontSize: 16, fontWeight: 700 }}>Quién va</div>
         <div style={{ fontSize: 12, fontWeight: 600, color: PAL.inkSoft }}>3 / 3</div>
       </div>
@@ -821,35 +751,30 @@ const Screen5_Invite = ({ navigate = () => {} }) => {
             <div style={{ fontSize: 13, fontWeight: 700 }}>Abrir votación</div>
             <div style={{ fontSize: 11, color: PAL.inkSoft }}>Mayoría decide si entra al plan</div>
           </div>
-          <Shake>
-            <div style={{ width: 42, height: 24, borderRadius: 100, background: PAL.orange, position: 'relative' }}>
-              <div style={{ position: 'absolute', right: 2, top: 2, width: 20, height: 20, borderRadius: '50%', background: '#fff' }}/>
-            </div>
-          </Shake>
+          {/* toggle on */}
+          <div style={{ width: 42, height: 24, borderRadius: 100, background: PAL.orange, position: 'relative' }}>
+            <div style={{ position: 'absolute', right: 2, top: 2, width: 20, height: 20, borderRadius: '50%', background: '#fff' }}/>
+          </div>
         </div>
       </div>
 
       <div style={{ padding: '8px 20px 16px', background: PAL.bg, display: 'flex', gap: 10 }}>
-        <Shake>
-          <div style={{
-            flex: 1, background: PAL.white, border: `1px solid ${PAL.line}`, color: PAL.ink,
-            borderRadius: 16, padding: '15px', textAlign: 'center', fontWeight: 700, fontSize: 14,
-          }}>
-            Borrador
-          </div>
-        </Shake>
-        <Tap>
-          <div onClick={() => navigate('posted')} style={{
-            flex: 2, background: PAL.orange, color: '#fff', borderRadius: 16, padding: '15px',
-            textAlign: 'center', fontWeight: 700, fontSize: 14,
-            boxShadow: '0 10px 24px -6px rgba(255,107,53,0.55)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            cursor: 'pointer',
-          }}>
-            <Icon name="check" size={16} color="#fff" stroke={2.4}/>
-            Proponer al grupo
-          </div>
-        </Tap>
+        <div style={{
+          flex: 1, background: PAL.white, border: `1px solid ${PAL.line}`, color: PAL.ink,
+          borderRadius: 16, padding: '15px', textAlign: 'center', fontWeight: 700, fontSize: 14,
+        }}>
+          Borrador
+        </div>
+        <div onClick={() => navigate('posted')} style={{
+          flex: 2, background: PAL.orange, color: '#fff', borderRadius: 16, padding: '15px',
+          textAlign: 'center', fontWeight: 700, fontSize: 14,
+          boxShadow: '0 10px 24px -6px rgba(255,107,53,0.55)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          cursor: 'pointer',
+        }}>
+          <Icon name="check" size={16} color="#fff" stroke={2.4}/>
+          Proponer al grupo
+        </div>
       </div>
     </Phone>
   );
@@ -929,24 +854,20 @@ const Screen6_Posted = ({ navigate = () => {} }) => (
     </div>
 
     <div style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <Tap>
-        <div onClick={() => navigate('plan')} style={{
-          background: '#fff', color: PAL.blueDeep, borderRadius: 16, padding: '15px',
-          textAlign: 'center', fontWeight: 700, fontSize: 15, cursor: 'pointer',
-        }}>
-          Volver al plan del viaje
-        </div>
-      </Tap>
-      <Shake>
-        <div style={{
-          color: '#fff', opacity: 0.8, padding: '10px', textAlign: 'center',
-          fontWeight: 600, fontSize: 13,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-        }}>
-          <Icon name="msg" size={15} color="#fff"/>
-          Escribirle al grupo
-        </div>
-      </Shake>
+      <div onClick={() => navigate('plan')} style={{
+        background: '#fff', color: PAL.blueDeep, borderRadius: 16, padding: '15px',
+        textAlign: 'center', fontWeight: 700, fontSize: 15, cursor: 'pointer',
+      }}>
+        Volver al plan del viaje
+      </div>
+      <div style={{
+        color: '#fff', opacity: 0.8, padding: '10px', textAlign: 'center',
+        fontWeight: 600, fontSize: 13,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+      }}>
+        <Icon name="msg" size={15} color="#fff"/>
+        Escribirle al grupo
+      </div>
     </div>
   </Phone>
 );

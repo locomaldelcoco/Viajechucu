@@ -1,10 +1,11 @@
-const CACHE = 'viajero-v5';
+const CACHE = 'viajero-v6';
 const SHELL = [
   '/index.html',
   '/manifest.json',
   '/icon.svg',
   '/app.jsx',
   '/screens.jsx',
+  '/firebase.js',
 ];
 
 self.addEventListener('install', e => {

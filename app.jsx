@@ -11,6 +11,7 @@ const ViajeroApp = () => {
     invite:      <Screen5_Invite navigate={navigate} />,
     posted:      <Screen6_Posted navigate={navigate} />,
     profile:     <Screen7_Profile navigate={navigate} />,
+    group:       <Screen8_Group navigate={navigate} />,
   };
 
   return (

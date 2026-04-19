@@ -357,6 +357,7 @@ const Screen1_Trips = ({ navigate = () => {} }) => (
     <TabBar active="home" onTab={k => {
       if (k === 'plan') navigate('type-pick');
       if (k === 'me') navigate('profile');
+      if (k === 'group') navigate('group');
     }}/>
   </Phone>
 );
@@ -1054,7 +1055,134 @@ const Screen7_Profile = ({ navigate = () => {} }) => {
   );
 };
 
+// ═════════════════════════════════════════════════════════════
+// SCREEN 8 — Grupo
+// ═════════════════════════════════════════════════════════════
+const Screen8_Group = ({ navigate = () => {} }) => {
+  const ME = GROUP[0];
+  const isAdmin = ME.me;
+
+  const [members, setMembers] = React.useState([
+    { ...GROUP[0], role: 'admin' },
+    { ...GROUP[1], role: 'miembro' },
+    { ...GROUP[2], role: 'miembro' },
+    { ...GROUP[3], role: 'miembro' },
+  ]);
+  const [copied, setCopied] = React.useState(false);
+  const [removing, setRemoving] = React.useState(null);
+
+  const removeMember = id => {
+    setMembers(ms => ms.filter(m => m.id !== id));
+    setRemoving(null);
+  };
+
+  const handleCopy = () => {
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Phone bg={PAL.bg}>
+      {/* Header */}
+      <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10, background: PAL.white, borderBottom: `1px solid ${PAL.line}`, flexShrink: 0 }}>
+        <Tap>
+          <div onClick={() => navigate('home')} style={{ width: 40, height: 40, borderRadius: 12, background: PAL.bg, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <Icon name="back" size={20} color={PAL.ink}/>
+          </div>
+        </Tap>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 11, color: PAL.inkSoft, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.4 }}>Patagonia · verano</div>
+          <div style={{ fontSize: 17, fontWeight: 700 }}>Grupo</div>
+        </div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: PAL.white, background: PAL.blue, padding: '4px 10px', borderRadius: 100 }}>
+          {members.length} miembros
+        </div>
+      </div>
+
+      {/* Contenido */}
+      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 16, padding: '16px 20px' }}>
+
+        {/* Lista de integrantes */}
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 10 }}>Integrantes</div>
+          <div style={{ background: PAL.white, borderRadius: 16, border: `1px solid ${PAL.line}`, overflow: 'hidden' }}>
+            {members.map((m, i) => (
+              <div key={m.id}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: removing === m.id ? 'none' : (i < members.length - 1 ? `1px solid ${PAL.line}` : 'none') }}>
+                  {/* Avatar con color asignado */}
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 17, color: '#fff', flexShrink: 0, boxShadow: `0 2px 8px ${m.color}55` }}>
+                    {m.initial}
+                  </div>
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700 }}>{m.name}</span>
+                      {m.me && <span style={{ fontSize: 10, color: PAL.inkSoft, fontWeight: 500 }}>(vos)</span>}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
+                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: m.color }}/>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: m.role === 'admin' ? PAL.orange : PAL.inkSoft, textTransform: 'capitalize' }}>{m.role}</span>
+                    </div>
+                  </div>
+                  {/* Eliminar — solo admin, solo otros miembros */}
+                  {isAdmin && !m.me && (
+                    removing === m.id ? (
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <div onClick={() => removeMember(m.id)} style={{ padding: '5px 10px', borderRadius: 8, background: PAL.red, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Eliminar</div>
+                        <div onClick={() => setRemoving(null)} style={{ padding: '5px 10px', borderRadius: 8, background: PAL.bg, border: `1px solid ${PAL.line}`, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>No</div>
+                      </div>
+                    ) : (
+                      <div onClick={() => setRemoving(m.id)} style={{ width: 32, height: 32, borderRadius: 9, background: '#FBE5E5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                        <Icon name="trash" size={15} color={PAL.red}/>
+                      </div>
+                    )
+                  )}
+                </div>
+                {/* Confirmación inline */}
+                {removing === m.id && (
+                  <div style={{ padding: '8px 16px 12px', background: '#FBE5E5', borderBottom: i < members.length - 1 ? `1px solid ${PAL.line}` : 'none' }}>
+                    <span style={{ fontSize: 12, color: PAL.red, fontWeight: 600 }}>¿Eliminar a {m.name} del grupo?</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Link de invitación */}
+        {isAdmin && (
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 10 }}>Invitar al grupo</div>
+            <div style={{ background: PAL.white, borderRadius: 16, border: `1px solid ${PAL.line}`, padding: '14px 16px' }}>
+              <div style={{ fontSize: 12, color: PAL.inkSoft, marginBottom: 10 }}>Compartí este link para que alguien se una al viaje.</div>
+              <div style={{ background: PAL.bg, borderRadius: 10, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, border: `1px solid ${PAL.line}` }}>
+                <Icon name="tag" size={14} color={PAL.inkSoft}/>
+                <span style={{ fontSize: 12, color: PAL.inkSoft, flex: 1, fontFamily: 'monospace' }}>viajechucu.app/unirse/PAT-2026</span>
+              </div>
+              <Tap>
+                <div onClick={handleCopy} style={{ background: copied ? PAL.green : PAL.blue, color: '#fff', borderRadius: 12, padding: '12px', textAlign: 'center', fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'background 0.2s' }}>
+                  <Icon name={copied ? 'check' : 'sparkle'} size={16} color="#fff"/>
+                  {copied ? '¡Link copiado!' : 'Copiar link de invitación'}
+                </div>
+              </Tap>
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      <TabBar active="group" onTab={k => {
+        if (k === 'home') navigate('home');
+        if (k === 'plan') navigate('type-pick');
+        if (k === 'me') navigate('profile');
+      }}/>
+    </Phone>
+  );
+};
+
 Object.assign(window, {
   Screen1_Trips, Screen2_Plan, Screen3_TypePick,
-  Screen4_Form, Screen5_Invite, Screen6_Posted, Screen7_Profile,
+  Screen4_Form, Screen5_Invite, Screen6_Posted,
+  Screen7_Profile, Screen8_Group,
+});
 });

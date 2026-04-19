@@ -1,4 +1,4 @@
-const CACHE = 'viajero-v3';
+const CACHE = 'viajero-v4';
 const SHELL = [
   '/index.html',
   '/manifest.json',

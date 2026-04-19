@@ -611,8 +611,8 @@ const Screen3_TypePick = ({ navigate = () => {} }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ fontSize: 11, color: PAL.inkSoft, fontWeight: 600 }}>1 / 3</div>
             <Tap>
-              <div onClick={() => navigate('plan')} style={{ width: 32, height: 32, borderRadius: 10, background: PAL.bg, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <Icon name="cross" size={16} color={PAL.inkSoft}/>
+              <div onClick={() => navigate('plan')} style={{ width: 32, height: 32, borderRadius: 10, background: PAL.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <Icon name="cross" size={16} color="#fff" stroke={2.4}/>
               </div>
             </Tap>
           </div>

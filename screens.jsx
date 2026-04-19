@@ -1185,4 +1185,3 @@ Object.assign(window, {
   Screen4_Form, Screen5_Invite, Screen6_Posted,
   Screen7_Profile, Screen8_Group,
 });
-});

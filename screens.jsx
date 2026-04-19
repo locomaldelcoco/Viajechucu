@@ -356,7 +356,10 @@ const Screen1_Trips = ({ navigate = () => {} }) => (
       ))}
     </div>
 
-    <TabBar active="home" onTab={k => k === 'plan' && navigate('type-pick')}/>
+    <TabBar active="home" onTab={k => {
+      if (k === 'plan') navigate('type-pick');
+      if (k === 'me') navigate('profile');
+    }}/>
   </Phone>
 );
 
@@ -910,7 +913,109 @@ const Screen6_Posted = ({ navigate = () => {} }) => (
   </Phone>
 );
 
+// ═════════════════════════════════════════════════════════════
+// SCREEN 7 — Perfil de usuario
+// ═════════════════════════════════════════════════════════════
+const Screen7_Profile = ({ navigate = () => {} }) => {
+  const ME = GROUP[0];
+  const [notifs, setNotifs] = React.useState(true);
+  const [darkMode, setDarkMode] = React.useState(false);
+
+  const trips = [
+    { name: 'Patagonia · verano',    dates: '14-25 feb 2026', people: 4, activities: 9,  active: true  },
+    { name: 'Córdoba · semana santa', dates: 'abr 2025',       people: 3, activities: 5,  active: false },
+    { name: 'Mendoza · vendimia',     dates: 'mar 2025',       people: 6, activities: 7,  active: false },
+  ];
+
+  const Toggle = ({ on, onToggle }) => (
+    <div onClick={onToggle} style={{ width: 44, height: 26, borderRadius: 100, background: on ? PAL.blue : PAL.line, position: 'relative', cursor: 'pointer', flexShrink: 0, transition: 'background 0.2s' }}>
+      <div style={{ position: 'absolute', left: on ? 20 : 2, top: 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }}/>
+    </div>
+  );
+
+  return (
+    <Phone bg={PAL.bg}>
+      {/* Portada */}
+      <div style={{ height: 130, background: `linear-gradient(135deg, ${PAL.blueDeep}, ${PAL.blue})`, position: 'relative', flexShrink: 0, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', right: -30, top: -30, width: 140, height: 140, borderRadius: '50%', background: PAL.orange, opacity: 0.22 }}/>
+        <div style={{ position: 'absolute', left: -20, bottom: -20, width: 100, height: 100, borderRadius: '50%', background: '#fff', opacity: 0.07 }}/>
+      </div>
+
+      {/* Avatar sobre portada */}
+      <div style={{ padding: '0 22px', marginTop: -44, flexShrink: 0 }}>
+        <div style={{ width: 86, height: 86, borderRadius: '50%', background: ME.color, border: '4px solid #FAF8F4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 800, color: '#fff', boxShadow: '0 6px 18px rgba(0,0,0,0.18)' }}>
+          {ME.initial}
+        </div>
+      </div>
+
+      {/* Nombre */}
+      <div style={{ padding: '8px 24px 0', flexShrink: 0 }}>
+        <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>{ME.name}</div>
+        <div style={{ fontSize: 13, color: PAL.inkSoft, marginTop: 2 }}>@luna · Buenos Aires</div>
+      </div>
+
+      {/* Contenido */}
+      <div style={{ flex: 1, overflow: 'hidden', padding: '18px 20px 8px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+        {/* Mis viajes */}
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 10 }}>Mis viajes</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {trips.map((t, i) => (
+              <Shake key={i}>
+                <div style={{ background: PAL.white, borderRadius: 14, padding: '11px 14px', border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: t.active ? PAL.green : PAL.line, flexShrink: 0 }}/>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700 }}>{t.name}</div>
+                    <div style={{ fontSize: 11, color: PAL.inkSoft, marginTop: 1 }}>{t.dates} · {t.people} viajeros · {t.activities} actividades</div>
+                  </div>
+                  <Icon name="chevR" size={16} color={PAL.inkSoft}/>
+                </div>
+              </Shake>
+            ))}
+          </div>
+        </div>
+
+        {/* Ajustes */}
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 10 }}>Ajustes</div>
+          <div style={{ background: PAL.white, borderRadius: 16, border: `1px solid ${PAL.line}`, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: `1px solid ${PAL.line}` }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: PAL.blueSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon name="bell" size={17} color={PAL.blue}/>
+              </div>
+              <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>Notificaciones</span>
+              <Toggle on={notifs} onToggle={() => setNotifs(v => !v)}/>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: `1px solid ${PAL.line}` }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: PAL.yellowSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon name="sun" size={17} color={PAL.yellow}/>
+              </div>
+              <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>Modo oscuro</span>
+              <Toggle on={darkMode} onToggle={() => setDarkMode(v => !v)}/>
+            </div>
+            <Shake>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px' }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: '#FBE5E5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon name="cross" size={17} color={PAL.red}/>
+                </div>
+                <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: PAL.red }}>Cerrar sesión</span>
+              </div>
+            </Shake>
+          </div>
+        </div>
+
+      </div>
+
+      <TabBar active="me" onTab={k => {
+        if (k === 'home') navigate('home');
+        if (k === 'plan') navigate('type-pick');
+      }}/>
+    </Phone>
+  );
+};
+
 Object.assign(window, {
   Screen1_Trips, Screen2_Plan, Screen3_TypePick,
-  Screen4_Form, Screen5_Invite, Screen6_Posted,
+  Screen4_Form, Screen5_Invite, Screen6_Posted, Screen7_Profile,
 });

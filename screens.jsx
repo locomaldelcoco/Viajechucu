@@ -606,9 +606,16 @@ const Screen3_TypePick = ({ navigate = () => {} }) => {
         boxShadow: '0 -20px 60px rgba(0,0,0,0.3)',
       }}>
         <div style={{ width: 44, height: 5, borderRadius: 3, background: PAL.line, margin: '0 auto 16px' }}/>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.3 }}>Proponer actividad</div>
-          <div style={{ fontSize: 11, color: PAL.inkSoft, fontWeight: 600 }}>1 / 3</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ fontSize: 11, color: PAL.inkSoft, fontWeight: 600 }}>1 / 3</div>
+            <Tap>
+              <div onClick={() => navigate('plan')} style={{ width: 32, height: 32, borderRadius: 10, background: PAL.bg, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <Icon name="cross" size={16} color={PAL.inkSoft}/>
+              </div>
+            </Tap>
+          </div>
         </div>
         <div style={{ fontSize: 13, color: PAL.inkSoft, marginTop: 4, marginBottom: 16 }}>
           ¿Qué querés sumar al plan del grupo?

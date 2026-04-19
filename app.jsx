@@ -20,6 +20,7 @@ const ViajeroApp = () => {
       alignItems: 'center',
       justifyContent: 'center',
     }}>
+      <GlobalStyles />
       {views[screen]}
     </div>
   );

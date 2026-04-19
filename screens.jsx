@@ -169,7 +169,7 @@ const Phone = ({ children, bg = PAL.bg, statusTint, statusDark = false, navDark 
   </div>
 );
 
-const TabBar = ({ active = 'plan' }) => {
+const TabBar = ({ active = 'plan', onTab = () => {} }) => {
   const tabs = [
     { k: 'home', label: 'Inicio', icon: 'home' },
     { k: 'map', label: 'Mapa', icon: 'map' },
@@ -186,7 +186,7 @@ const TabBar = ({ active = 'plan' }) => {
       {tabs.map(t => {
         const isA = t.k === active;
         if (t.fab) return (
-          <div key={t.k} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, marginTop: -22 }}>
+          <div key={t.k} onClick={() => onTab(t.k)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, marginTop: -22, cursor: 'pointer' }}>
             <div style={{
               width: 54, height: 54, borderRadius: 18, background: PAL.orange,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -199,7 +199,7 @@ const TabBar = ({ active = 'plan' }) => {
           </div>
         );
         return (
-          <div key={t.k} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 54 }}>
+          <div key={t.k} onClick={() => onTab(t.k)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 54, cursor: 'pointer' }}>
             <Icon name={t.icon} size={22} color={isA ? PAL.blue : PAL.inkSoft} stroke={isA ? 2.2 : 1.8}/>
             <span style={{ fontSize: 10, fontWeight: isA ? 700 : 500, color: isA ? PAL.blue : PAL.inkSoft }}>{t.label}</span>
           </div>
@@ -212,7 +212,7 @@ const TabBar = ({ active = 'plan' }) => {
 // ═════════════════════════════════════════════════════════════
 // SCREEN 1 — Trips hub (próximos)
 // ═════════════════════════════════════════════════════════════
-const Screen1_Trips = () => (
+const Screen1_Trips = ({ navigate = () => {} }) => (
   <Phone>
     <div style={{
       background: PAL.blue, color: '#fff', padding: '18px 24px 70px',
@@ -268,7 +268,7 @@ const Screen1_Trips = () => (
 
         {/* CTAs */}
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-          <div style={{ flex: 1, background: PAL.blue, color: '#fff', borderRadius: 12, padding: '11px 12px', fontWeight: 700, fontSize: 13, textAlign: 'center' }}>
+          <div onClick={() => navigate('plan')} style={{ flex: 1, background: PAL.blue, color: '#fff', borderRadius: 12, padding: '11px 12px', fontWeight: 700, fontSize: 13, textAlign: 'center', cursor: 'pointer' }}>
             Ver plan del viaje
           </div>
           <div style={{ background: PAL.white, border: `1px solid ${PAL.line}`, borderRadius: 12, padding: '11px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -310,14 +310,14 @@ const Screen1_Trips = () => (
       ))}
     </div>
 
-    <TabBar active="home"/>
+    <TabBar active="home" onTab={k => k === 'plan' && navigate('type-pick')}/>
   </Phone>
 );
 
 // ═════════════════════════════════════════════════════════════
 // SCREEN 2 — Trip plan (itinerary, collaborative)
 // ═════════════════════════════════════════════════════════════
-const Screen2_Plan = () => {
+const Screen2_Plan = ({ navigate = () => {} }) => {
   const T = GROUP[1], C = GROUP[2], M = GROUP[3], L = GROUP[0];
   const items = [
     {
@@ -364,7 +364,7 @@ const Screen2_Plan = () => {
     <Phone bg={PAL.bg}>
       {/* Top bar */}
       <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 12, background: PAL.white, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div onClick={() => navigate('home')} style={{ width: 40, height: 40, borderRadius: 12, background: PAL.white, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
           <Icon name="back" size={20} color={PAL.ink}/>
         </div>
         <div style={{ flex: 1 }}>
@@ -455,11 +455,12 @@ const Screen2_Plan = () => {
 
       {/* Floating add */}
       <div style={{ padding: '0 20px 14px' }}>
-        <div style={{
+        <div onClick={() => navigate('type-pick')} style={{
           background: PAL.orange, color: '#fff', borderRadius: 16, padding: '14px',
           textAlign: 'center', fontWeight: 700, fontSize: 15,
           boxShadow: '0 10px 24px -6px rgba(255,107,53,0.55)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          cursor: 'pointer',
         }}>
           <Icon name="plus" size={18} color="#fff" stroke={2.4}/>
           Proponer actividad
@@ -472,7 +473,8 @@ const Screen2_Plan = () => {
 // ═════════════════════════════════════════════════════════════
 // SCREEN 3 — New activity bottom sheet (type pick + WHEN)
 // ═════════════════════════════════════════════════════════════
-const Screen3_TypePick = () => {
+const Screen3_TypePick = ({ navigate = () => {} }) => {
+  const [selected, setSelected] = React.useState('hike');
   const types = [
     { k: 'food', label: 'Comida', icon: 'food', color: PAL.orange },
     { k: 'hike', label: 'Excursión', icon: 'hike', color: PAL.blue },
@@ -508,14 +510,15 @@ const Screen3_TypePick = () => {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-          {types.map((t, i) => {
-            const hi = i === 1; // excursión preselected
+          {types.map((t) => {
+            const hi = selected === t.k;
             return (
-              <div key={t.k} style={{
+              <div key={t.k} onClick={() => { setSelected(t.k); setTimeout(() => navigate('form'), 200); }} style={{
                 background: hi ? PAL.blueSoft : PAL.bg,
                 border: `${hi ? 2 : 1}px solid ${hi ? PAL.blue : PAL.line}`,
                 borderRadius: 16, padding: '14px 10px', textAlign: 'center',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                cursor: 'pointer', transition: 'all 0.15s',
               }}>
                 <div style={{
                   width: 40, height: 40, borderRadius: 12,
@@ -543,10 +546,10 @@ const Screen3_TypePick = () => {
 // ═════════════════════════════════════════════════════════════
 // SCREEN 4 — Activity details form (with day & time slot)
 // ═════════════════════════════════════════════════════════════
-const Screen4_Form = () => (
+const Screen4_Form = ({ navigate = () => {} }) => (
   <Phone bg={PAL.bg}>
     <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-      <div style={{ width: 40, height: 40, borderRadius: 12, background: PAL.white, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div onClick={() => navigate('type-pick')} style={{ width: 40, height: 40, borderRadius: 12, background: PAL.white, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
         <Icon name="back" size={20} color={PAL.ink}/>
       </div>
       <div style={{ flex: 1, fontSize: 16, fontWeight: 700 }}>Nueva excursión</div>
@@ -648,8 +651,8 @@ const Screen4_Form = () => (
       <div style={{
         background: PAL.blue, color: '#fff', borderRadius: 16, padding: '15px',
         textAlign: 'center', fontWeight: 700, fontSize: 15, letterSpacing: 0.1,
-        boxShadow: '0 10px 24px -6px rgba(31,162,216,0.4)',
-      }}>
+        boxShadow: '0 10px 24px -6px rgba(31,162,216,0.4)', cursor: 'pointer',
+      }} onClick={() => navigate('invite')}>
         Siguiente · invitar al grupo
       </div>
     </div>
@@ -660,26 +663,29 @@ const Screen4_Form = () => (
 // ═════════════════════════════════════════════════════════════
 // SCREEN 5 — Invite group / set RSVP
 // ═════════════════════════════════════════════════════════════
-const Screen5_Invite = () => {
+const Screen5_Invite = ({ navigate = () => {} }) => {
+  const [rsvp, setRsvp] = React.useState({
+    lu: 'going', to: 'going', ca: 'maybe', ma: 'notgoing',
+  });
   const rows = [
-    { p: GROUP[0], status: 'going',    note: 'vos' },
-    { p: GROUP[1], status: 'going',    note: 'sabe remar' },
-    { p: GROUP[2], status: 'maybe',    note: '' },
-    { p: GROUP[3], status: 'notgoing', note: 'lesionado' },
+    { p: GROUP[0], note: 'vos' },
+    { p: GROUP[1], note: 'sabe remar' },
+    { p: GROUP[2], note: '' },
+    { p: GROUP[3], note: 'lesionado' },
   ];
-  const Pill = ({ status, color, bg, label, active }) => (
-    <div style={{
+  const Pill = ({ pid, value, color, bg, label }) => (
+    <div onClick={() => setRsvp(r => ({ ...r, [pid]: value }))} style={{
       padding: '6px 10px', borderRadius: 10, fontSize: 11, fontWeight: 700,
-      background: active ? bg : 'transparent',
-      color: active ? color : PAL.inkSoft,
-      border: `1px solid ${active ? color : PAL.line}`,
-      letterSpacing: 0.2, textAlign: 'center', minWidth: 38,
+      background: rsvp[pid] === value ? bg : 'transparent',
+      color: rsvp[pid] === value ? color : PAL.inkSoft,
+      border: `1px solid ${rsvp[pid] === value ? color : PAL.line}`,
+      letterSpacing: 0.2, textAlign: 'center', minWidth: 38, cursor: 'pointer',
     }}>{label}</div>
   );
   return (
     <Phone bg={PAL.bg}>
       <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 12, background: PAL.white, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div onClick={() => navigate('form')} style={{ width: 40, height: 40, borderRadius: 12, background: PAL.white, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
           <Icon name="back" size={20} color={PAL.ink}/>
         </div>
         <div style={{ flex: 1, fontSize: 16, fontWeight: 700 }}>Quién va</div>
@@ -724,9 +730,9 @@ const Screen5_Invite = () => {
                   {r.note && <div style={{ fontSize: 11, color: PAL.inkSoft }}>{r.note}</div>}
                 </div>
                 <div style={{ display: 'flex', gap: 4 }}>
-                  <Pill label="✓" color={PAL.green} bg={PAL.greenSoft} active={r.status==='going'}/>
-                  <Pill label="?" color={PAL.orangeInk} bg={PAL.orangeSoft} active={r.status==='maybe'}/>
-                  <Pill label="✕" color={PAL.red} bg="#FBE5E5" active={r.status==='notgoing'}/>
+                  <Pill pid={r.p.id} value="going"    label="✓" color={PAL.green}    bg={PAL.greenSoft}/>
+                  <Pill pid={r.p.id} value="maybe"    label="?" color={PAL.orangeInk} bg={PAL.orangeSoft}/>
+                  <Pill pid={r.p.id} value="notgoing" label="✕" color={PAL.red}      bg="#FBE5E5"/>
                 </div>
               </div>
             ))}
@@ -759,11 +765,12 @@ const Screen5_Invite = () => {
         }}>
           Borrador
         </div>
-        <div style={{
+        <div onClick={() => navigate('posted')} style={{
           flex: 2, background: PAL.orange, color: '#fff', borderRadius: 16, padding: '15px',
           textAlign: 'center', fontWeight: 700, fontSize: 14,
           boxShadow: '0 10px 24px -6px rgba(255,107,53,0.55)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          cursor: 'pointer',
         }}>
           <Icon name="check" size={16} color="#fff" stroke={2.4}/>
           Proponer al grupo
@@ -776,7 +783,7 @@ const Screen5_Invite = () => {
 // ═════════════════════════════════════════════════════════════
 // SCREEN 6 — Confirmation: posted to group
 // ═════════════════════════════════════════════════════════════
-const Screen6_Posted = () => (
+const Screen6_Posted = ({ navigate = () => {} }) => (
   <Phone bg={PAL.blueDeep} statusDark navDark>
     <div style={{
       flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -847,9 +854,9 @@ const Screen6_Posted = () => (
     </div>
 
     <div style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{
+      <div onClick={() => navigate('plan')} style={{
         background: '#fff', color: PAL.blueDeep, borderRadius: 16, padding: '15px',
-        textAlign: 'center', fontWeight: 700, fontSize: 15,
+        textAlign: 'center', fontWeight: 700, fontSize: 15, cursor: 'pointer',
       }}>
         Volver al plan del viaje
       </div>

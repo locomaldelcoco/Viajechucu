@@ -436,9 +436,10 @@ const Screen1_Trips = ({ navigate = () => {} }) => (
     </div>
 
     <TabBar active="home" onTab={k => {
-      if (k === 'plan') navigate('type-pick');
-      if (k === 'me') navigate('profile');
+      if (k === 'plan')  navigate('type-pick');
+      if (k === 'me')    navigate('profile');
       if (k === 'group') navigate('group');
+      if (k === 'map')   navigate('map');
     }}/>
   </Phone>
 );
@@ -1209,8 +1210,10 @@ const Screen7_Profile = ({ navigate = () => {}, currentUser = null }) => {
       </div>
 
       <TabBar active="me" onTab={k => {
-        if (k === 'home') navigate('home');
-        if (k === 'plan') navigate('type-pick');
+        if (k === 'home')  navigate('home');
+        if (k === 'plan')  navigate('type-pick');
+        if (k === 'group') navigate('group');
+        if (k === 'map')   navigate('map');
       }}/>
     </Phone>
   );
@@ -1333,9 +1336,10 @@ const Screen8_Group = ({ navigate = () => {} }) => {
       </div>
 
       <TabBar active="group" onTab={k => {
-        if (k === 'home') navigate('home');
-        if (k === 'plan') navigate('type-pick');
-        if (k === 'me') navigate('profile');
+        if (k === 'home')  navigate('home');
+        if (k === 'plan')  navigate('type-pick');
+        if (k === 'me')    navigate('profile');
+        if (k === 'map')   navigate('map');
       }}/>
     </Phone>
   );
@@ -1545,9 +1549,120 @@ const Screen9_ActivityDetail = ({ navigate = () => {}, activity = {}, day = 14, 
   );
 };
 
+// ═════════════════════════════════════════════════════════════
+// SCREEN MAP — Mapa del viaje
+// ═════════════════════════════════════════════════════════════
+const ScreenMap = ({ navigate = () => {} }) => {
+  const [selected, setSelected] = React.useState(0);
+
+  const places = [
+    { id: 0, name: 'Bariloche',        sub: 'Base del viaje · 5 noches',  color: PAL.blue,     icon: 'bed',   x: '44%', y: '38%', activities: 6 },
+    { id: 1, name: 'Cerro Catedral',   sub: 'Trekking Refugio Frey',      color: PAL.orange,   icon: 'hike',  x: '58%', y: '28%', activities: 2 },
+    { id: 2, name: 'El Bolsón',        sub: 'Asado · feria artesanal',    color: PAL.green,    icon: 'asado', x: '30%', y: '56%', activities: 3 },
+    { id: 3, name: 'Lago Gutiérrez',   sub: 'Kayak · día 2',              color: PAL.blueDeep, icon: 'hike',  x: '52%', y: '52%', activities: 1 },
+  ];
+
+  const sel = places[selected];
+
+  return (
+    <Phone bg={PAL.bg}>
+      {/* Header */}
+      <div style={{ padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 11, color: PAL.inkSoft, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.4 }}>Patagonia · verano</div>
+          <div style={{ fontSize: 17, fontWeight: 700 }}>Mapa del viaje</div>
+        </div>
+        <div style={{ background: PAL.blueSoft, borderRadius: 10, padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <Icon name="pin" size={14} color={PAL.blue}/>
+          <span style={{ fontSize: 12, fontWeight: 700, color: PAL.blue }}>{places.length} lugares</span>
+        </div>
+      </div>
+
+      {/* Mapa simulado */}
+      <div style={{ flex: 1, position: 'relative', margin: '0 16px', borderRadius: 20, overflow: 'hidden', background: '#D4E6C3', minHeight: 0 }}>
+        {/* Fondo tipo relieve */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, #C8DEB0 0%, #B8D4A0 30%, #A8C890 55%, #90B87A 100%)' }}/>
+        {/* Lagos */}
+        <div style={{ position: 'absolute', left: '35%', top: '40%', width: '28%', height: '22%', borderRadius: '40% 60% 55% 45%', background: 'rgba(100,160,220,0.7)' }}/>
+        <div style={{ position: 'absolute', left: '18%', top: '52%', width: '16%', height: '14%', borderRadius: '50%', background: 'rgba(100,160,220,0.5)' }}/>
+        <div style={{ position: 'absolute', left: '55%', top: '45%', width: '12%', height: '18%', borderRadius: '45% 55% 60% 40%', background: 'rgba(100,160,220,0.6)' }}/>
+        {/* Cerros */}
+        <div style={{ position: 'absolute', right: '15%', top: '15%', width: 0, height: 0, borderLeft: '22px solid transparent', borderRight: '22px solid transparent', borderBottom: '38px solid rgba(120,100,80,0.35)' }}/>
+        <div style={{ position: 'absolute', right: '22%', top: '20%', width: 0, height: 0, borderLeft: '16px solid transparent', borderRight: '16px solid transparent', borderBottom: '28px solid rgba(120,100,80,0.28)' }}/>
+        {/* Rutas */}
+        <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path d="M44 38 Q50 44 52 52" stroke="rgba(180,140,80,0.7)" strokeWidth="1.2" fill="none" strokeDasharray="2,2"/>
+          <path d="M44 38 Q36 46 30 56" stroke="rgba(180,140,80,0.7)" strokeWidth="1.2" fill="none" strokeDasharray="2,2"/>
+          <path d="M58 28 Q52 32 44 38" stroke="rgba(180,140,80,0.7)" strokeWidth="1.2" fill="none" strokeDasharray="2,2"/>
+        </svg>
+        {/* Pins */}
+        {places.map((p, i) => (
+          <div key={p.id} onClick={() => setSelected(i)} style={{ position: 'absolute', left: p.x, top: p.y, transform: 'translate(-50%, -100%)', cursor: 'pointer', zIndex: selected === i ? 10 : 5 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{
+                width: selected === i ? 40 : 32, height: selected === i ? 40 : 32,
+                borderRadius: '50% 50% 50% 0', transform: 'rotate(-45deg)',
+                background: selected === i ? p.color : PAL.white,
+                border: `3px solid ${p.color}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: selected === i ? `0 4px 14px ${p.color}88` : '0 2px 8px rgba(0,0,0,0.2)',
+                transition: 'all 0.2s',
+              }}>
+                <div style={{ transform: 'rotate(45deg)' }}>
+                  <Icon name={p.icon} size={selected === i ? 18 : 14} color={selected === i ? '#fff' : p.color} stroke={2}/>
+                </div>
+              </div>
+              {selected === i && (
+                <div style={{ marginTop: 6, background: '#fff', borderRadius: 8, padding: '3px 8px', fontSize: 10, fontWeight: 700, color: p.color, boxShadow: '0 2px 6px rgba(0,0,0,0.15)', whiteSpace: 'nowrap' }}>
+                  {p.name}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+        {/* Brújula */}
+        <div style={{ position: 'absolute', top: 12, right: 12, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.15)', fontSize: 12, fontWeight: 700, color: PAL.ink }}>N</div>
+      </div>
+
+      {/* Card del lugar seleccionado */}
+      <div style={{ margin: '12px 16px 8px', background: PAL.white, borderRadius: 18, padding: '14px 16px', border: `1px solid ${PAL.line}`, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 46, height: 46, borderRadius: 14, background: sel.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Icon name={sel.icon} size={22} color="#fff" stroke={2}/>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 700 }}>{sel.name}</div>
+            <div style={{ fontSize: 12, color: PAL.inkSoft, marginTop: 2 }}>{sel.sub}</div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: sel.color }}>{sel.activities}</div>
+            <div style={{ fontSize: 10, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.4 }}>actividades</div>
+          </div>
+        </div>
+        {/* Minilista */}
+        <div style={{ marginTop: 10, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {places.map((p, i) => (
+            <div key={p.id} onClick={() => setSelected(i)} style={{ padding: '4px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600, cursor: 'pointer', background: selected === i ? sel.color : PAL.bg, color: selected === i ? '#fff' : PAL.inkSoft, border: `1px solid ${selected === i ? sel.color : PAL.line}`, transition: 'all 0.15s' }}>
+              {p.name}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <TabBar active="map" onTab={k => {
+        if (k === 'home')  navigate('home');
+        if (k === 'plan')  navigate('type-pick');
+        if (k === 'group') navigate('group');
+        if (k === 'me')    navigate('profile');
+      }}/>
+    </Phone>
+  );
+};
+
 Object.assign(window, {
   Screen0_Login,
   Screen1_Trips, Screen2_Plan, Screen3_TypePick,
   Screen4_Form, Screen5_Invite, Screen6_Posted,
   Screen7_Profile, Screen8_Group, Screen9_ActivityDetail,
+  ScreenMap,
 });

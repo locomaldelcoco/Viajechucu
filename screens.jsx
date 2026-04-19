@@ -237,12 +237,10 @@ const TabBar = ({ active = 'plan', onTab = () => {} }) => {
           </Tap>
         );
         return (
-          <Shake key={t.k}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 54 }}>
-              <Icon name={t.icon} size={22} color={isA ? PAL.blue : PAL.inkSoft} stroke={isA ? 2.2 : 1.8}/>
-              <span style={{ fontSize: 10, fontWeight: isA ? 700 : 500, color: isA ? PAL.blue : PAL.inkSoft }}>{t.label}</span>
-            </div>
-          </Shake>
+          <div key={t.k} onClick={() => onTab(t.k)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 54, cursor: 'pointer' }}>
+            <Icon name={t.icon} size={22} color={isA ? PAL.blue : PAL.inkSoft} stroke={isA ? 2.2 : 1.8}/>
+            <span style={{ fontSize: 10, fontWeight: isA ? 700 : 500, color: isA ? PAL.blue : PAL.inkSoft }}>{t.label}</span>
+          </div>
         );
       })}
     </div>

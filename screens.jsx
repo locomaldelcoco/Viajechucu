@@ -918,6 +918,36 @@ const Screen7_Profile = ({ navigate = () => {} }) => {
   const ME = GROUP[0];
   const [notifs, setNotifs] = React.useState(true);
   const [darkMode, setDarkMode] = React.useState(false);
+  const [socials, setSocials] = React.useState({
+    instagram: { connected: true,  handle: '@luna.viajes' },
+    x:         { connected: false, handle: '@luna' },
+    tiktok:    { connected: true,  handle: '@lunavlogs' },
+  });
+  const toggleSocial = k => setSocials(s => ({ ...s, [k]: { ...s[k], connected: !s[k].connected } }));
+
+  const IgIcon = ({ color }) => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5"/>
+      <circle cx="12" cy="12" r="4"/>
+      <circle cx="17.5" cy="6.5" r="1.2" fill={color} stroke="none"/>
+    </svg>
+  );
+  const XIcon = ({ color }) => (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill={color}>
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+    </svg>
+  );
+  const TikTokIcon = ({ color }) => (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill={color}>
+      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.2 8.2 0 004.79 1.53V6.74a4.85 4.85 0 01-1.02-.05z"/>
+    </svg>
+  );
+
+  const NETS = [
+    { key: 'instagram', label: 'Instagram', brand: '#E1306C', bgOn: '#FDE8F0', Icon: IgIcon },
+    { key: 'x',         label: 'X',         brand: '#000000', bgOn: '#E8E8E8', Icon: XIcon },
+    { key: 'tiktok',    label: 'TikTok',    brand: '#FF0050', bgOn: '#FFE0EA', Icon: TikTokIcon },
+  ];
 
   const trips = [
     { name: 'Patagonia · verano',    dates: '14-25 feb 2026', people: 4, activities: 9,  active: true  },
@@ -971,6 +1001,30 @@ const Screen7_Profile = ({ navigate = () => {} }) => {
                 </div>
               </Shake>
             ))}
+          </div>
+        </div>
+
+        {/* Redes sociales */}
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 10 }}>Redes sociales</div>
+          <div style={{ background: PAL.white, borderRadius: 16, border: `1px solid ${PAL.line}`, overflow: 'hidden' }}>
+            {NETS.map((net, i) => {
+              const s = socials[net.key];
+              return (
+                <div key={net.key} onClick={() => toggleSocial(net.key)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: i < NETS.length - 1 ? `1px solid ${PAL.line}` : 'none', cursor: 'pointer' }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 11, background: s.connected ? net.bgOn : '#F0F0F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.2s' }}>
+                    <net.Icon color={s.connected ? net.brand : '#BBBBBB'}/>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: s.connected ? PAL.ink : PAL.inkSoft }}>{net.label}</div>
+                    <div style={{ fontSize: 11, marginTop: 1, color: s.connected ? net.brand : PAL.inkSoft, fontWeight: s.connected ? 600 : 400 }}>
+                      {s.connected ? s.handle : 'Toca para conectar'}
+                    </div>
+                  </div>
+                  <div style={{ width: 9, height: 9, borderRadius: '50%', background: s.connected ? net.brand : PAL.line, flexShrink: 0, transition: 'background 0.2s' }}/>
+                </div>
+              );
+            })}
           </div>
         </div>
 

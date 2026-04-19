@@ -974,6 +974,17 @@ const Screen7_Profile = ({ navigate = () => {} }) => {
             {ME.initial}
           </div>
         </div>
+        {/* Iconos redes — derecha, debajo de portada */}
+        <div style={{ position: 'absolute', bottom: -22, right: 20, display: 'flex', gap: 10 }}>
+          {NETS.map(net => {
+            const s = socials[net.key];
+            return (
+              <div key={net.key} onClick={() => toggleSocial(net.key)} style={{ width: 38, height: 38, borderRadius: '50%', background: s.connected ? net.bgOn : '#F2F2F2', border: `2px solid ${s.connected ? net.brand : '#D8D8D8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: s.connected ? `0 2px 8px ${net.brand}40` : 'none', transition: 'all 0.2s' }}>
+                <net.Icon color={s.connected ? net.brand : '#BBBBBB'}/>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Nombre */}
@@ -1001,30 +1012,6 @@ const Screen7_Profile = ({ navigate = () => {} }) => {
                 </div>
               </Shake>
             ))}
-          </div>
-        </div>
-
-        {/* Redes sociales */}
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 10 }}>Redes sociales</div>
-          <div style={{ background: PAL.white, borderRadius: 16, border: `1px solid ${PAL.line}`, overflow: 'hidden' }}>
-            {NETS.map((net, i) => {
-              const s = socials[net.key];
-              return (
-                <div key={net.key} onClick={() => toggleSocial(net.key)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: i < NETS.length - 1 ? `1px solid ${PAL.line}` : 'none', cursor: 'pointer' }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 11, background: s.connected ? net.bgOn : '#F0F0F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.2s' }}>
-                    <net.Icon color={s.connected ? net.brand : '#BBBBBB'}/>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: s.connected ? PAL.ink : PAL.inkSoft }}>{net.label}</div>
-                    <div style={{ fontSize: 11, marginTop: 1, color: s.connected ? net.brand : PAL.inkSoft, fontWeight: s.connected ? 600 : 400 }}>
-                      {s.connected ? s.handle : 'Toca para conectar'}
-                    </div>
-                  </div>
-                  <div style={{ width: 9, height: 9, borderRadius: '50%', background: s.connected ? net.brand : PAL.line, flexShrink: 0, transition: 'background 0.2s' }}/>
-                </div>
-              );
-            })}
           </div>
         </div>
 

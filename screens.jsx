@@ -3,8 +3,8 @@
 // Palette: celeste + naranja. Argentine context (Patagonia trip).
 
 const PAL = {
-  blue: '#1FA2D8',
-  blueDeep: '#0E7AAB',
+  blue: '#1565C0',
+  blueDeep: '#0D47A1',
   blueSoft: '#E2F2FA',
   blueInk: '#2C6E8C',
   orange: '#FF6B35',
@@ -263,7 +263,7 @@ const Screen1_Trips = ({ navigate = () => {} }) => (
           <Shake>
             <div style={{ position: 'relative' }}>
               <Icon name="bell" size={22} color="#fff"/>
-              <div style={{ position: 'absolute', top: -3, right: -3, width: 10, height: 10, borderRadius: '50%', background: PAL.orange, border: '2px solid #1FA2D8' }}/>
+              <div style={{ position: 'absolute', top: -3, right: -3, width: 10, height: 10, borderRadius: '50%', background: PAL.orange, border: '2px solid #1565C0' }}/>
             </div>
           </Shake>
           <Avatar p={GROUP[0]} size={36}/>
@@ -885,7 +885,7 @@ const Screen6_Posted = ({ navigate = () => {} }) => (
                   position: 'absolute', bottom: -2, right: -2, width: 18, height: 18, borderRadius: '50%',
                   background: x.color, color: '#fff', fontSize: 9, fontWeight: 800,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: '2px solid #0E7AAB',
+                  border: '2px solid #0D47A1',
                 }}>{x.state === '✓' ? '✓' : '·'}</div>
               </div>
               <span style={{ fontSize: 10, opacity: 0.85, fontWeight: 600 }}>{x.p.name}</span>
@@ -933,21 +933,21 @@ const Screen7_Profile = ({ navigate = () => {} }) => {
 
   return (
     <Phone bg={PAL.bg}>
-      {/* Portada */}
-      <div style={{ height: 130, background: `linear-gradient(135deg, ${PAL.blueDeep}, ${PAL.blue})`, position: 'relative', flexShrink: 0, overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', right: -30, top: -30, width: 140, height: 140, borderRadius: '50%', background: PAL.orange, opacity: 0.22 }}/>
-        <div style={{ position: 'absolute', left: -20, bottom: -20, width: 100, height: 100, borderRadius: '50%', background: '#fff', opacity: 0.07 }}/>
-      </div>
-
-      {/* Avatar sobre portada */}
-      <div style={{ padding: '0 22px', marginTop: -44, flexShrink: 0 }}>
-        <div style={{ width: 86, height: 86, borderRadius: '50%', background: ME.color, border: '4px solid #FAF8F4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 800, color: '#fff', boxShadow: '0 6px 18px rgba(0,0,0,0.18)' }}>
-          {ME.initial}
+      {/* Portada + avatar superpuesto */}
+      <div style={{ position: 'relative', flexShrink: 0, marginBottom: 48 }}>
+        <div style={{ height: 130, background: `linear-gradient(135deg, ${PAL.blueDeep}, ${PAL.blue})`, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', right: -30, top: -30, width: 140, height: 140, borderRadius: '50%', background: PAL.orange, opacity: 0.22 }}/>
+          <div style={{ position: 'absolute', left: -20, bottom: -20, width: 100, height: 100, borderRadius: '50%', background: '#fff', opacity: 0.07 }}/>
+        </div>
+        <div style={{ position: 'absolute', bottom: -43, left: 22 }}>
+          <div style={{ width: 86, height: 86, borderRadius: '50%', background: ME.color, border: '4px solid #FAF8F4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 800, color: '#fff', boxShadow: '0 6px 18px rgba(0,0,0,0.18)' }}>
+            {ME.initial}
+          </div>
         </div>
       </div>
 
       {/* Nombre */}
-      <div style={{ padding: '8px 24px 0', flexShrink: 0 }}>
+      <div style={{ padding: '0 24px 0', flexShrink: 0 }}>
         <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>{ME.name}</div>
         <div style={{ fontSize: 13, color: PAL.inkSoft, marginTop: 2 }}>@luna · Buenos Aires</div>
       </div>

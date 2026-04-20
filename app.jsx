@@ -59,9 +59,9 @@ const ViajeroApp = () => {
 
   const views = {
     home:              <Screen1_Trips navigate={navigate} currentUser={authUser} currentTrip={currentTrip} />,
-    plan:              <Screen2_Plan  navigate={navigate} currentTrip={currentTrip} />,
+    plan:              <Screen2_Plan  navigate={navigate} currentTrip={currentTrip} currentUser={authUser} />,
     'type-pick':       <Screen3_TypePick navigate={navigate} />,
-    form:              <Screen4_Form    navigate={navigate} />,
+    form:              <Screen4_Form    navigate={navigate} currentTrip={currentTrip} currentUser={authUser} {...navParams} />,
     invite:            <Screen5_Invite  navigate={navigate} />,
     posted:            <Screen6_Posted  navigate={navigate} />,
     profile:           <Screen7_Profile navigate={navigate} currentUser={authUser} />,

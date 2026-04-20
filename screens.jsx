@@ -785,80 +785,75 @@ const Screen1_Trips = ({ navigate = () => {}, currentUser = null, currentTrip = 
 // ═════════════════════════════════════════════════════════════
 // SCREEN 2 — Trip plan (itinerary, collaborative)
 // ═════════════════════════════════════════════════════════════
-const _DAYS = [14,15,16,17,18,19];
-const _DAY_LABELS = ['vie','sáb','dom','lun','mar','mié'];
-const T = GROUP[1], C = GROUP[2], M = GROUP[3], L = GROUP[0];
-const ACTIVITIES_BY_DAY = {
-  14: [
-    { id:'a1', t:'09:00', title:'Mate y medialunas', place:'Refugio Bahía López', icon:'mate', color:PAL.orange, status:'confirm', proposer:T, going:[T,C,M,L], cost:'$ 4.800', notes:'Llevar mate y yerbera.' },
-    { id:'a2', t:'11:00', title:'Trekking Refugio Frey', place:'Cerro Catedral · 4 h', icon:'hike', color:PAL.blue, status:'confirm', proposer:T, going:[T,C,L], notGoing:[M], cost:'$ 0', notes:'Sendero rojo, nivel medio.' },
-    { id:'a3', t:'15:30', title:'Asado de cordero', place:'Parador El Bolsón', icon:'asado', color:PAL.orange, status:'voting', proposer:C, votes:3, cost:'$ 28.500', notes:'Reserva a nombre de Cami.' },
-    { id:'a4', t:'—', title:'Cervecería artesanal', place:'Sin horario · sugerencia', icon:'star', color:PAL.blueDeep, status:'pending', proposer:M, cost:'$ ?', notes:'A confirmar horario.' },
-  ],
-  15: [
-    { id:'b1', t:'10:00', title:'Kayak lago Gutiérrez', place:'Lago Gutiérrez, Bariloche', icon:'hike', color:PAL.blue, status:'confirm', proposer:L, going:[T,C,M,L], cost:'$ 18.000', notes:'Llevar muda seca.' },
-    { id:'b2', t:'14:00', title:'Almuerzo parador', place:'Parador km 8', icon:'food', color:PAL.orange, status:'confirm', proposer:C, going:[T,C,L], cost:'$ 12.000', notes:'' },
-  ],
-  16: [
-    { id:'c1', t:'08:30', title:'Amanecer en el cerro', place:'Cerro Otto · teleférico', icon:'sun', color:PAL.yellow, status:'voting', proposer:T, votes:2, cost:'$ 9.000', notes:'Salida temprana 8:30 hs.' },
-    { id:'c2', t:'13:00', title:'Picnic en el lago', place:'Playa Bonita, Bariloche', icon:'mate', color:PAL.green, status:'confirm', proposer:L, going:[T,C,M,L], cost:'$ 3.500', notes:'Cada uno lleva algo.' },
-    { id:'c3', t:'19:00', title:'Show de folklore', place:'Centro Cívico', icon:'mus', color:PAL.blueDeep, status:'pending', proposer:M, cost:'$ 6.000', notes:'' },
-  ],
-  17: [
-    { id:'d1', t:'Todo el día', title:'Día libre en El Bolsón', place:'El Bolsón, Río Negro', icon:'sun', color:PAL.green, status:'confirm', proposer:L, going:[T,C,M,L], cost:'$ 0', notes:'Feria artesanal los jueves.' },
-  ],
-  18: [
-    { id:'e1', t:'10:00', title:'Cabalgata patagónica', place:'Estancia El Cóndor', icon:'hike', color:PAL.orange, status:'voting', proposer:C, votes:1, cost:'$ 22.000', notes:'Cupos limitados, reservar.' },
-    { id:'e2', t:'20:00', title:'Cena de despedida', place:'Restaurante Casita Suiza', icon:'food', color:PAL.blue, status:'confirm', proposer:T, going:[T,C,M,L], cost:'$ 45.000', notes:'Reserva para 4 personas.' },
-  ],
-  19: [
-    { id:'f1', t:'08:00', title:'Vuelta a Buenos Aires', place:'Aero Bariloche → AEP', icon:'plane', color:PAL.blueDeep, status:'confirm', proposer:L, going:[T,C,M,L], cost:'$ 180.000', notes:'Check-in 2 hs antes.' },
-  ],
-};
 
-const StatusChip = ({ status }) => {
-  if (status === 'confirm') return (
-    <span style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:10, fontWeight:700, color:PAL.green, background:PAL.greenSoft, padding:'3px 7px', borderRadius:100, textTransform:'uppercase', letterSpacing:0.4 }}>
-      <Icon name="check" size={10} color={PAL.green} stroke={2.6}/>Confirmado
-    </span>
-  );
-  if (status === 'voting') return (
-    <span style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:10, fontWeight:700, color:PAL.orangeInk, background:PAL.orangeSoft, padding:'3px 7px', borderRadius:100, textTransform:'uppercase', letterSpacing:0.4 }}>
-      Votación abierta
-    </span>
-  );
-  return (
-    <span style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:10, fontWeight:700, color:PAL.blueInk, background:PAL.blueSoft, padding:'3px 7px', borderRadius:100, textTransform:'uppercase', letterSpacing:0.4 }}>
-      Sugerencia
-    </span>
-  );
-};
+// ─── Date utilities ───────────────────────────────────────────
+const _MONTH_IDX = {ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,oct:9,nov:10,dic:11};
+const _DAY_NAMES  = ['dom','lun','mar','mié','jue','vie','sáb'];
 
-const Screen2_Plan = ({ navigate = () => {} }) => {
-  const [activeDay, setActiveDay] = React.useState(14);
-  const [activities, setActivities] = React.useState(() =>
-    Object.fromEntries(Object.entries(ACTIVITIES_BY_DAY).map(([k,v]) => [k, v.map(a => ({...a}))]))
-  );
-  const [deleting, setDeleting] = React.useState(null);
-  const isAdmin = true;
+function parseTripDate(str) {
+  if (!str) return null;
+  const p = str.toLowerCase().split(' ');
+  if (p.length < 3) return null;
+  return new Date(+p[2], _MONTH_IDX[p[1]], +p[0]);
+}
+function isoDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function getTripDays(startDate, endDate) {
+  const s = parseTripDate(startDate);
+  if (!s) return [];
+  const e = parseTripDate(endDate) || new Date(s.getFullYear(), s.getMonth(), s.getDate() + 6);
+  const days = [];
+  const cur = new Date(s);
+  while (cur <= e && days.length < 30) { days.push(isoDate(new Date(cur))); cur.setDate(cur.getDate()+1); }
+  return days;
+}
+function dayLabel(iso) { const [y,m,d]=iso.split('-').map(Number); return _DAY_NAMES[new Date(y,m-1,d).getDay()]; }
+function dayNum(iso)   { return parseInt(iso.split('-')[2]); }
 
-  const items = activities[activeDay] || [];
+const Screen2_Plan = ({ navigate = () => {}, currentTrip = null, currentUser = null }) => {
+  const tripDays = getTripDays(currentTrip?.startDate, currentTrip?.endDate);
+  const [activeDay, setActiveDay] = React.useState(tripDays[0] || '');
+  const [activities, setActivities] = React.useState([]);
+  const [loading, setLoading]       = React.useState(true);
+  const [deleting, setDeleting]     = React.useState(null);
 
-  const deleteActivity = (id) => {
-    setActivities(prev => ({
-      ...prev,
-      [activeDay]: prev[activeDay].filter(a => a.id !== id),
+  const isAdmin = currentTrip?.members?.[currentUser?.uid]?.role === 'admin';
+  const tripPeople = Object.values(currentTrip?.members || {}).map((m, i) => ({
+    name: m.name, photoURL: m.photoURL || null,
+    initial: m.name.charAt(0).toUpperCase(),
+    color: ['#FF6B35','#1FA2D8','#F4B941','#2E9E6A'][i % 4],
+  }));
+
+  React.useEffect(() => {
+    if (!currentTrip?.id) { setLoading(false); return; }
+    getActivities(currentTrip.id)
+      .then(acts => { setActivities(acts); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [currentTrip?.id]);
+
+  const dayActivities = activities
+    .filter(a => a.day === activeDay)
+    .sort((a, b) => (a.time === '—' ? '99:99' : a.time || '00:00').localeCompare(b.time === '—' ? '99:99' : b.time || '00:00'));
+
+  const handleVote = async (act) => {
+    if (!currentUser?.uid) return;
+    const hasVoted = !!(act.votes || {})[currentUser.uid];
+    setActivities(prev => prev.map(a => {
+      if (a.id !== act.id) return a;
+      const votes = { ...(a.votes || {}) };
+      if (hasVoted) delete votes[currentUser.uid]; else votes[currentUser.uid] = true;
+      return { ...a, votes };
     }));
-    setDeleting(null);
+    try { await toggleVote(currentTrip.id, act.id, currentUser.uid, hasVoted); }
+    catch(err) { console.error('Vote error:', err); }
   };
 
-  const voteActivity = (id) => {
-    setActivities(prev => ({
-      ...prev,
-      [activeDay]: prev[activeDay].map(a =>
-        a.id === id ? { ...a, votes: Math.min((a.votes || 0) + 1, 4), myVote: !a.myVote } : a
-      ),
-    }));
+  const handleDelete = async (id) => {
+    setActivities(prev => prev.filter(a => a.id !== id));
+    setDeleting(null);
+    try { await removeActivity(currentTrip.id, id); }
+    catch(err) { console.error('Delete error:', err); }
   };
 
   return (
@@ -871,115 +866,95 @@ const Screen2_Plan = ({ navigate = () => {} }) => {
           </div>
         </Tap>
         <div style={{ flex:1 }}>
-          <div style={{ fontSize:11, color:PAL.inkSoft, fontWeight:600, textTransform:'uppercase', letterSpacing:0.4 }}>Patagonia · verano</div>
+          <div style={{ fontSize:11, color:PAL.inkSoft, fontWeight:600, textTransform:'uppercase', letterSpacing:0.4 }}>{currentTrip?.destination || currentTrip?.name || 'Mi viaje'}</div>
           <div style={{ fontSize:17, fontWeight:700, marginTop:-1 }}>Plan del viaje</div>
         </div>
-        <AvatarStack people={GROUP} size={26} bg={PAL.bg}/>
+        <AvatarStack people={tripPeople} size={26} bg={PAL.bg}/>
       </div>
 
       {/* Day strip */}
-      <div style={{ padding:'4px 16px 12px', display:'flex', gap:8, overflowX:'hidden' }}>
-        {_DAYS.map((d, i) => {
-          const a = d === activeDay;
-          return (
-            <div key={d} onClick={() => setActiveDay(d)} style={{
-              flexShrink:0, width:52, padding:'10px 0', borderRadius:14, textAlign:'center',
-              background: a ? PAL.blue : PAL.white, color: a ? '#fff' : PAL.ink,
-              border:`1px solid ${a ? PAL.blue : PAL.line}`,
-              cursor:'pointer', transition:'background 0.15s',
-            }}>
-              <div style={{ fontSize:10, fontWeight:600, opacity: a ? 0.7 : 0.55, textTransform:'uppercase' }}>
-                {_DAY_LABELS[i]}
-              </div>
-              <div style={{ fontSize:17, fontWeight:700, marginTop:2 }}>{d}</div>
-            </div>
-          );
-        })}
+      <div style={{ padding:'4px 16px 12px', display:'flex', gap:8, overflowX:'auto' }}>
+        {tripDays.length === 0
+          ? <div style={{ fontSize:13, color:PAL.inkSoft, padding:'10px 0' }}>El viaje no tiene fechas definidas.</div>
+          : tripDays.map(d => {
+              const a = d === activeDay;
+              return (
+                <div key={d} onClick={() => setActiveDay(d)} style={{
+                  flexShrink:0, width:52, padding:'10px 0', borderRadius:14, textAlign:'center',
+                  background: a ? PAL.blue : PAL.white, color: a ? '#fff' : PAL.ink,
+                  border:`1px solid ${a ? PAL.blue : PAL.line}`,
+                  cursor:'pointer', transition:'background 0.15s',
+                }}>
+                  <div style={{ fontSize:10, fontWeight:600, opacity: a ? 0.7 : 0.55, textTransform:'uppercase' }}>{dayLabel(d)}</div>
+                  <div style={{ fontSize:17, fontWeight:700, marginTop:2 }}>{dayNum(d)}</div>
+                </div>
+              );
+            })
+        }
       </div>
 
       {/* Items */}
-      <div style={{ flex:1, padding:'4px 16px 12px', overflow:'hidden', display:'flex', flexDirection:'column', gap:10 }}>
-        {items.length === 0 && (
+      <div style={{ flex:1, padding:'4px 16px 12px', overflowY:'auto', display:'flex', flexDirection:'column', gap:10 }}>
+        {loading && (
+          <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', opacity:0.4 }}>
+            <div style={{ fontSize:14, color:PAL.inkSoft }}>Cargando…</div>
+          </div>
+        )}
+        {!loading && dayActivities.length === 0 && (
           <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, opacity:0.5 }}>
             <Icon name="calendar" size={36} color={PAL.inkSoft}/>
             <div style={{ fontSize:14, color:PAL.inkSoft, fontWeight:600 }}>Sin actividades este día</div>
           </div>
         )}
-        {items.map((e) => (
-          <div key={e.id}>
-            <div onClick={() => navigate('activity-detail', { activity: e, day: activeDay, onVote: voteActivity, onDelete: deleteActivity })}
-              style={{
-                background:PAL.white, borderRadius:16, padding:12, border:`1px solid ${PAL.line}`,
-                display:'flex', gap:12, alignItems:'flex-start', cursor:'pointer',
-              }}>
-              {/* Left: time */}
-              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4, paddingTop:2 }}>
-                <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, width:38, textAlign:'center' }}>{e.t}</div>
-                <Icon name="drag" size={14} color={PAL.line} stroke={2}/>
-              </div>
-
-              {/* Middle */}
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
-                  <div style={{ width:22, height:22, borderRadius:7, background:e.color, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                    <Icon name={e.icon} size={13} color="#fff" stroke={2.2}/>
+        {!loading && dayActivities.map(e => {
+          const myVote   = !!(e.votes || {})[currentUser?.uid];
+          const voteCount = Object.keys(e.votes || {}).length;
+          const propObj  = { name: e.proposer?.name || '?', photoURL: e.proposer?.photoURL || null, initial: (e.proposer?.name || '?')[0].toUpperCase(), color: PAL.inkSoft };
+          return (
+            <div key={e.id}>
+              <div onClick={() => navigate('activity-detail', { activity: e })}
+                style={{ background:PAL.white, borderRadius:16, padding:12, border:`1px solid ${PAL.line}`, display:'flex', gap:12, alignItems:'flex-start', cursor:'pointer' }}>
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4, paddingTop:2 }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, width:38, textAlign:'center' }}>{e.time || '—'}</div>
+                  <Icon name="drag" size={14} color={PAL.line} stroke={2}/>
+                </div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
+                    <div style={{ width:22, height:22, borderRadius:7, background:e.color || PAL.blue, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <Icon name={e.icon || 'star'} size={13} color="#fff" stroke={2.2}/>
+                    </div>
+                    <span style={{ fontSize:14.5, fontWeight:700 }}>{e.title}</span>
                   </div>
-                  <span style={{ fontSize:14.5, fontWeight:700 }}>{e.title}</span>
-                </div>
-                <div style={{ fontSize:12, color:PAL.inkSoft, marginBottom:6 }}>{e.place}</div>
-                <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
-                  <StatusChip status={e.status}/>
-                  <span style={{ fontSize:11, fontWeight:700, color:PAL.orangeInk }}>{e.cost}</span>
-                </div>
-                <div style={{ marginTop:8, display:'flex', alignItems:'center', gap:8 }}>
-                  {e.going && (
-                    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                      <AvatarStack people={e.going} size={22} bg={PAL.white}/>
-                      <span style={{ fontSize:11, color:PAL.inkSoft }}>
-                        {e.going.length} van{e.notGoing ? ` · ${e.notGoing.length} no` : ''}
-                      </span>
+                  {e.place && <div style={{ fontSize:12, color:PAL.inkSoft, marginBottom:6 }}>{e.place}</div>}
+                  {e.cost && <div style={{ marginBottom:6 }}><span style={{ fontSize:11, fontWeight:700, color:PAL.orangeInk }}>{e.cost}</span></div>}
+                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                    <Avatar p={propObj} size={20}/>
+                    <span style={{ fontSize:11, color:PAL.inkSoft }}>Propuso <b style={{ color:PAL.ink }}>{e.proposer?.name?.split(' ')[0] || 'Alguien'}</b></span>
+                    <div onClick={ev => { ev.stopPropagation(); handleVote(e); }}
+                      style={{ display:'flex', alignItems:'center', gap:4, cursor:'pointer', marginLeft:'auto' }}>
+                      <Icon name="heart" size={15} color={myVote ? PAL.red : PAL.inkSoft} stroke={myVote ? 2.5 : 1.8}/>
+                      <span style={{ fontSize:11, color: myVote ? PAL.red : PAL.inkSoft, fontWeight: myVote ? 700 : 500 }}>{voteCount}</span>
                     </div>
-                  )}
-                  {e.status === 'voting' && (
-                    <div onClick={ev => { ev.stopPropagation(); voteActivity(e.id); }}
-                      style={{ display:'flex', alignItems:'center', gap:5, cursor:'pointer' }}>
-                      <Icon name="heart" size={15} color={e.myVote ? PAL.red : PAL.inkSoft} stroke={e.myVote ? 2.5 : 1.8}/>
-                      <span style={{ fontSize:11, color: e.myVote ? PAL.red : PAL.inkSoft, fontWeight: e.myVote ? 700 : 500 }}>{e.votes || 0}/4</span>
-                    </div>
-                  )}
-                  {e.status === 'pending' && (
-                    <span style={{ fontSize:11, color:PAL.inkSoft }}>
-                      Propuso <b style={{ color:PAL.ink }}>{e.proposer.name}</b>
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Right: admin actions */}
-              {isAdmin && (
-                <div style={{ display:'flex', flexDirection:'column', gap:6 }} onClick={ev => ev.stopPropagation()}>
-                  <Shake>
-                    <div style={{ display:'flex', padding:4 }}>
-                      <Icon name="edit" size={16} color={PAL.inkSoft}/>
-                    </div>
-                  </Shake>
-                  <div onClick={() => setDeleting(e.id)} style={{ display:'flex', padding:4, cursor:'pointer' }}>
-                    <Icon name="trash" size={16} color={deleting === e.id ? PAL.red : PAL.inkSoft}/>
                   </div>
+                </div>
+                {isAdmin && (
+                  <div onClick={ev => ev.stopPropagation()}>
+                    <div onClick={() => setDeleting(e.id)} style={{ padding:4, cursor:'pointer' }}>
+                      <Icon name="trash" size={16} color={deleting === e.id ? PAL.red : PAL.inkSoft}/>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {deleting === e.id && (
+                <div style={{ background:'#FBE5E5', borderRadius:'0 0 16px 16px', padding:'10px 14px', display:'flex', alignItems:'center', gap:8, marginTop:-4 }}>
+                  <span style={{ flex:1, fontSize:12, color:PAL.red, fontWeight:600 }}>¿Eliminar "{e.title}"?</span>
+                  <div onClick={() => handleDelete(e.id)} style={{ padding:'5px 12px', borderRadius:8, background:PAL.red, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>Sí</div>
+                  <div onClick={() => setDeleting(null)} style={{ padding:'5px 12px', borderRadius:8, background:PAL.bg, border:`1px solid ${PAL.line}`, fontSize:12, fontWeight:700, cursor:'pointer' }}>No</div>
                 </div>
               )}
             </div>
-
-            {/* Inline delete confirmation */}
-            {deleting === e.id && (
-              <div style={{ background:'#FBE5E5', borderRadius:'0 0 16px 16px', padding:'10px 14px', display:'flex', alignItems:'center', gap:8, marginTop:-4 }}>
-                <span style={{ flex:1, fontSize:12, color:PAL.red, fontWeight:600 }}>¿Eliminar "{e.title}"?</span>
-                <div onClick={() => deleteActivity(e.id)} style={{ padding:'5px 12px', borderRadius:8, background:PAL.red, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>Sí</div>
-                <div onClick={() => setDeleting(null)} style={{ padding:'5px 12px', borderRadius:8, background:PAL.bg, border:`1px solid ${PAL.line}`, fontSize:12, fontWeight:700, cursor:'pointer' }}>No</div>
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Floating add */}
@@ -1045,7 +1020,7 @@ const Screen3_TypePick = ({ navigate = () => {} }) => {
           {types.map((t) => {
             const hi = selected === t.k;
             return (
-              <div key={t.k} onClick={() => { setSelected(t.k); setTimeout(() => navigate('form'), 200); }} style={{
+              <div key={t.k} onClick={() => { setSelected(t.k); setTimeout(() => navigate('form', { actIcon: t.icon, actColor: t.color, actLabel: t.label }), 200); }} style={{
                 background: hi ? PAL.blueSoft : PAL.bg,
                 border: `${hi ? 2 : 1}px solid ${hi ? PAL.blue : PAL.line}`,
                 borderRadius: 16, padding: '14px 10px', textAlign: 'center',
@@ -1078,118 +1053,125 @@ const Screen3_TypePick = ({ navigate = () => {} }) => {
 // ═════════════════════════════════════════════════════════════
 // SCREEN 4 — Activity details form (with day & time slot)
 // ═════════════════════════════════════════════════════════════
-const Screen4_Form = ({ navigate = () => {} }) => (
-  <Phone bg={PAL.bg}>
-    <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-      <Tap>
-        <div onClick={() => navigate('type-pick')} style={{ width: 40, height: 40, borderRadius: 12, background: PAL.white, border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-          <Icon name="back" size={20} color={PAL.ink}/>
-        </div>
-      </Tap>
-      <div style={{ flex: 1, fontSize: 16, fontWeight: 700 }}>Nueva excursión</div>
-      <div style={{ fontSize: 12, fontWeight: 600, color: PAL.inkSoft }}>2 / 3</div>
-    </div>
+const Screen4_Form = ({ navigate = () => {}, currentTrip = null, currentUser = null, actIcon = 'star', actColor = PAL.blue, actLabel = 'Actividad' }) => {
+  const tripDays = getTripDays(currentTrip?.startDate, currentTrip?.endDate);
+  const [title, setTitle]   = React.useState('');
+  const [place, setPlace]   = React.useState('');
+  const [day, setDay]       = React.useState(tripDays[0] || '');
+  const [time, setTime]     = React.useState('');
+  const [cost, setCost]     = React.useState('');
+  const [notes, setNotes]   = React.useState('');
+  const [saving, setSaving] = React.useState(false);
+  const [err, setErr]       = React.useState('');
 
-    <div style={{ padding: '8px 22px', flex: 1, display: 'flex', flexDirection: 'column', gap: 14, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <div style={{ width: 44, height: 44, borderRadius: 14, background: PAL.blue, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="hike" size={22} color="#fff"/>
-        </div>
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 700 }}>Excursión · día 2</div>
-          <div style={{ fontSize: 12, color: PAL.inkSoft }}>Patagonia · verano</div>
-        </div>
-      </div>
+  const inp = { background:PAL.white, borderRadius:14, padding:'13px 16px', border:`1px solid ${PAL.line}`, fontSize:14, width:'100%', outline:'none', fontFamily:'Inter, sans-serif', color:PAL.ink, boxSizing:'border-box' };
 
-      {/* Title */}
-      <div>
-        <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Título</div>
-        <div style={{
-          background: PAL.white, borderRadius: 14, padding: '13px 16px',
-          border: `2px solid ${PAL.blue}`, fontSize: 15, fontWeight: 500,
-          display: 'flex', alignItems: 'center',
-        }}>
-          Kayak en lago Gutiérrez
-          <span style={{ width: 2, height: 18, background: PAL.blue, marginLeft: 2, animation: 'caret 1s infinite' }}/>
-        </div>
-      </div>
+  const handleSubmit = async () => {
+    if (!title.trim()) { setErr('El título es obligatorio.'); return; }
+    if (!currentTrip?.id || !currentUser?.uid) return;
+    setSaving(true); setErr('');
+    try {
+      await addActivity(currentTrip.id, {
+        title: title.trim(),
+        place: place.trim(),
+        day: day || tripDays[0] || '',
+        time: time.trim() || '—',
+        icon: actIcon,
+        color: actColor,
+        cost: cost.trim(),
+        notes: notes.trim(),
+        proposer: { uid: currentUser.uid, name: currentUser.displayName || 'Viajero', photoURL: currentUser.photoURL || null },
+        votes: {},
+      });
+      navigate('plan');
+    } catch(e) {
+      setErr('Error al guardar. Intentá de nuevo.');
+      setSaving(false);
+    }
+  };
 
-      {/* Place */}
-      <div>
-        <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Lugar</div>
-        <div style={{
-          background: PAL.white, borderRadius: 14, padding: '13px 16px',
-          border: `1px solid ${PAL.line}`, fontSize: 14,
-          display: 'flex', alignItems: 'center', gap: 10,
-        }}>
-          <Icon name="pin" size={18} color={PAL.orange}/>
-          <span style={{ flex: 1 }}>Lago Gutiérrez, Bariloche</span>
-          <span style={{ fontSize: 10, fontWeight: 700, color: PAL.orangeInk, background: PAL.orangeSoft, padding: '3px 7px', borderRadius: 100 }}>GPS</span>
-        </div>
-      </div>
-
-      {/* Day + time */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr', gap: 10 }}>
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Día</div>
-          <div style={{ background: PAL.white, borderRadius: 14, padding: '13px 12px', border: `1px solid ${PAL.line}`, fontSize: 13.5, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="calendar" size={16} color={PAL.inkSoft}/>
-            sáb 15 feb
+  return (
+    <Phone bg={PAL.bg}>
+      <div style={{ padding:'10px 16px', display:'flex', alignItems:'center', gap:10 }}>
+        <Tap>
+          <div onClick={() => navigate('type-pick')} style={{ width:40, height:40, borderRadius:12, background:PAL.white, border:`1px solid ${PAL.line}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+            <Icon name="back" size={20} color={PAL.ink}/>
           </div>
+        </Tap>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:11, color:PAL.inkSoft, fontWeight:600, textTransform:'uppercase', letterSpacing:0.4 }}>{currentTrip?.name || 'Viaje'}</div>
+          <div style={{ fontSize:17, fontWeight:700 }}>Nueva {actLabel.toLowerCase()}</div>
         </div>
+        <div style={{ width:40, height:40, borderRadius:14, background:actColor, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <Icon name={actIcon} size={20} color="#fff"/>
+        </div>
+      </div>
+
+      <div style={{ flex:1, padding:'8px 20px', display:'flex', flexDirection:'column', gap:14, overflowY:'auto' }}>
+        {/* Title */}
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Inicio</div>
-          <div style={{ background: PAL.white, borderRadius: 14, padding: '13px 12px', border: `1px solid ${PAL.line}`, fontSize: 13.5, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Icon name="clock" size={15} color={PAL.inkSoft}/> 10:00
-          </div>
+          <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:6 }}>Título *</div>
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder={`Ej: ${actLabel} en el destino`} style={inp}/>
         </div>
+
+        {/* Place */}
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Dura</div>
-          <div style={{ background: PAL.white, borderRadius: 14, padding: '13px 12px', border: `1px solid ${PAL.line}`, fontSize: 13.5 }}>
-            3 h
+          <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:6 }}>Lugar</div>
+          <PlacesInput value={place} onChange={setPlace} placeholder="Buscar lugar..." inputStyle={inp}/>
+        </div>
+
+        {/* Day strip */}
+        {tripDays.length > 0 && (
+          <div>
+            <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:6 }}>Día</div>
+            <div style={{ display:'flex', gap:8, overflowX:'auto', paddingBottom:4 }}>
+              {tripDays.map(d => (
+                <div key={d} onClick={() => setDay(d)} style={{
+                  flexShrink:0, padding:'10px 14px', borderRadius:12, textAlign:'center',
+                  background: d === day ? PAL.blue : PAL.white,
+                  color: d === day ? '#fff' : PAL.ink,
+                  border:`1px solid ${d === day ? PAL.blue : PAL.line}`,
+                  cursor:'pointer',
+                }}>
+                  <div style={{ fontSize:10, fontWeight:600, opacity:0.7, textTransform:'uppercase' }}>{dayLabel(d)}</div>
+                  <div style={{ fontSize:17, fontWeight:700 }}>{dayNum(d)}</div>
+                </div>
+              ))}
+            </div>
           </div>
+        )}
+
+        {/* Time */}
+        <div>
+          <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:6 }}>Horario</div>
+          <input value={time} onChange={e => setTime(e.target.value)} placeholder="Ej: 10:00 (opcional)" style={inp}/>
         </div>
+
+        {/* Cost */}
+        <div>
+          <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:6 }}>Costo estimado</div>
+          <input value={cost} onChange={e => setCost(e.target.value)} placeholder="Ej: $ 18.000 (opcional)" style={inp}/>
+        </div>
+
+        {/* Notes */}
+        <div>
+          <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:6 }}>Notas para el grupo</div>
+          <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Reservas, qué llevar, etc." rows={3} style={{ ...inp, resize:'none' }}/>
+        </div>
+
+        {err && <div style={{ fontSize:12, color:PAL.red, fontWeight:600 }}>{err}</div>}
       </div>
 
-      {/* Cost split */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.5 }}>Costo estimado</div>
-          <div style={{ fontSize: 11, color: PAL.blueDeep, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>
-            <Icon name="split" size={12} color={PAL.blueDeep}/> Dividir
+      <div style={{ padding:'8px 20px 16px' }}>
+        <Tap>
+          <div onClick={saving ? undefined : handleSubmit} style={{ background: saving ? PAL.line : PAL.blue, color:'#fff', borderRadius:16, padding:'15px', textAlign:'center', fontWeight:700, fontSize:15, cursor: saving ? 'default' : 'pointer', boxShadow: saving ? 'none' : '0 10px 24px -6px rgba(31,162,216,0.4)' }}>
+            {saving ? 'Guardando…' : 'Proponer al grupo'}
           </div>
-        </div>
-        <div style={{
-          background: PAL.white, borderRadius: 14, padding: '13px 16px', border: `1px solid ${PAL.line}`,
-          display: 'flex', alignItems: 'center', gap: 8,
-        }}>
-          <Icon name="dollar" size={16} color={PAL.inkSoft}/>
-          <span style={{ flex: 1, fontSize: 15, fontWeight: 600 }}>$ 18.000</span>
-          <span style={{ fontSize: 11, color: PAL.inkSoft }}>≈ <b style={{ color: PAL.ink }}>$ 4.500</b> c/u</span>
-        </div>
+        </Tap>
       </div>
-
-      {/* Notas */}
-      <div>
-        <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Notas para el grupo</div>
-        <div style={{
-          background: PAL.white, borderRadius: 14, padding: '12px 14px', border: `1px solid ${PAL.line}`,
-          fontSize: 13, color: PAL.inkSoft, minHeight: 50,
-        }}>
-          Reserva con 24 hs. Llevar muda seca y protector solar.
-        </div>
-      </div>
-    </div>
-
-    <div style={{ padding: '8px 20px 16px', background: PAL.bg }}>
-      <Tap>
-        <div onClick={() => navigate('invite')} style={{ background: PAL.blue, color: '#fff', borderRadius: 16, padding: '15px', textAlign: 'center', fontWeight: 700, fontSize: 15, letterSpacing: 0.1, boxShadow: '0 10px 24px -6px rgba(31,162,216,0.4)', cursor: 'pointer' }}>
-          Siguiente · invitar al grupo
-        </div>
-      </Tap>
-    </div>
-  </Phone>
-);
+    </Phone>
+  );
+};
 
 // ═════════════════════════════════════════════════════════════
 // SCREEN 5 — Invite group / set RSVP

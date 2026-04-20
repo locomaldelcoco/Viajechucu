@@ -110,8 +110,33 @@ async function removeTripMember(tripId, memberId) {
   });
 }
 
+// ── Activities ───────────────────────────────────────────────
+
+async function getActivities(tripId) {
+  const snap = await FB_DB.collection('trips').doc(tripId).collection('activities').get();
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+async function addActivity(tripId, data) {
+  const ref = FB_DB.collection('trips').doc(tripId).collection('activities').doc();
+  await ref.set({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+  return ref.id;
+}
+
+async function removeActivity(tripId, actId) {
+  await FB_DB.collection('trips').doc(tripId).collection('activities').doc(actId).delete();
+}
+
+async function toggleVote(tripId, actId, uid, hasVoted) {
+  const ref = FB_DB.collection('trips').doc(tripId).collection('activities').doc(actId);
+  await ref.update({
+    [`votes.${uid}`]: hasVoted ? firebase.firestore.FieldValue.delete() : true,
+  });
+}
+
 Object.assign(window, {
   FB_AUTH, FB_DB,
   signInWithGoogle, fbSignOut,
   createTrip, joinTrip, getUserTrip, getTrip, removeTripMember,
+  getActivities, addActivity, removeActivity, toggleVote,
 });

@@ -91,7 +91,6 @@ async function joinTrip(code, user) {
 async function getUserTrip(uid) {
   const snap = await FB_DB.collection('trips')
     .where('memberIds', 'array-contains', uid)
-    .orderBy('createdAt', 'desc')
     .limit(1)
     .get();
   if (snap.empty) return null;

@@ -9,8 +9,13 @@ const ViajeroApp = () => {
     return FB_AUTH.onAuthStateChanged(async user => {
       if (!user) { setAuthUser(null); setCurrentTrip(null); return; }
       setAuthUser(user);
-      const trip = await getUserTrip(user.uid);
-      setCurrentTrip(trip); // null si no tiene viaje
+      try {
+        const trip = await getUserTrip(user.uid);
+        setCurrentTrip(trip); // null si no tiene viaje
+      } catch(e) {
+        console.error('Error cargando viaje:', e);
+        setCurrentTrip(null); // sin viaje → muestra ScreenNewTrip
+      }
     });
   }, []);
 

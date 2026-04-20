@@ -349,17 +349,162 @@ const Screen0_Login = () => {
   );
 };
 
+// ─── PlacesInput — autocomplete via Nominatim (OpenStreetMap) ───
+const PlacesInput = ({ value, onChange, placeholder, inputStyle }) => {
+  const [query, setQuery]     = React.useState(value || '');
+  const [results, setResults] = React.useState([]);
+  const [busy, setBusy]       = React.useState(false);
+  const [open, setOpen]       = React.useState(false);
+  const timer = React.useRef(null);
+
+  const search = (q) => {
+    clearTimeout(timer.current);
+    if (!q || q.length < 3) { setResults([]); return; }
+    timer.current = setTimeout(async () => {
+      setBusy(true);
+      try {
+        const res  = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&accept-language=es`);
+        const data = await res.json();
+        setResults(data.map(r => r.display_name.split(',').slice(0, 2).join(',').trim()));
+      } catch(_) {} finally { setBusy(false); }
+    }, 500);
+  };
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative' }}>
+        <input
+          style={inputStyle}
+          placeholder={placeholder}
+          value={query}
+          onChange={e => { setQuery(e.target.value); onChange(e.target.value); setOpen(true); search(e.target.value); }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+        />
+        {busy && <div style={{ position:'absolute', right:14, top:'50%', transform:'translateY(-50%)', fontSize:18, color:PAL.inkSoft }}>…</div>}
+      </div>
+      {open && results.length > 0 && (
+        <div style={{ position:'absolute', top:'100%', left:0, right:0, background:'#fff', borderRadius:14, border:`1px solid ${PAL.line}`, boxShadow:'0 8px 28px rgba(0,0,0,0.14)', zIndex:200, overflow:'hidden', marginTop:4 }}>
+          {results.map((r, i) => (
+            <div key={i} onMouseDown={() => { setQuery(r); onChange(r); setResults([]); setOpen(false); }}
+              style={{ padding:'11px 14px', fontSize:13, cursor:'pointer', borderBottom: i < results.length-1 ? `1px solid ${PAL.line}` : 'none', display:'flex', alignItems:'center', gap:10, background:'#fff' }}>
+              <Icon name="pin" size={14} color={PAL.orange}/>
+              <span style={{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── DateRangePicker — mini calendario de rango ───────────────
+const DateRangePicker = ({ startDate, endDate, onChange }) => {
+  const now = new Date();
+  const [yr, setYr]  = React.useState(now.getFullYear());
+  const [mo, setMo]  = React.useState(now.getMonth());
+
+  const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const fmt = (d) => {
+    const ms = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return `${d.getDate()} ${ms[d.getMonth()]} ${d.getFullYear()}`;
+  };
+  const parse = (str) => {
+    if (!str) return null;
+    const ms = {ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,oct:9,nov:10,dic:11};
+    const [d,m,y] = str.toLowerCase().split(' ');
+    return new Date(+y, ms[m], +d);
+  };
+
+  const startD = parse(startDate);
+  const endD   = parse(endDate);
+
+  const days   = new Date(yr, mo+1, 0).getDate();
+  // Monday-first: (getDay()+6)%7
+  const offset = (new Date(yr, mo, 1).getDay() + 6) % 7;
+  const cells  = Array(offset).fill(null).concat(Array.from({length:days},(_,i)=>i+1));
+
+  const dateOf = (d) => new Date(yr, mo, d);
+
+  const isStart  = (d) => startD && dateOf(d).toDateString() === startD.toDateString();
+  const isEnd    = (d) => endD   && dateOf(d).toDateString() === endD.toDateString();
+  const inRange  = (d) => startD && endD && dateOf(d) > startD && dateOf(d) < endD;
+  const isPast   = (d) => dateOf(d) < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const handleDay = (d) => {
+    if (isPast(d)) return;
+    const clicked = dateOf(d);
+    if (!startD || (startD && endD)) {
+      onChange({ startDate: fmt(clicked), endDate: '' });
+    } else {
+      if (clicked < startD) onChange({ startDate: fmt(clicked), endDate: '' });
+      else onChange({ startDate, endDate: fmt(clicked) });
+    }
+  };
+
+  const prev = () => mo === 0 ? (setYr(y=>y-1), setMo(11)) : setMo(m=>m-1);
+  const next = () => mo === 11 ? (setYr(y=>y+1), setMo(0))  : setMo(m=>m+1);
+
+  return (
+    <div style={{ background:PAL.white, borderRadius:16, padding:'14px 12px', border:`1px solid ${PAL.line}`, boxShadow:'0 4px 16px rgba(0,0,0,0.08)' }}>
+      {/* Nav */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+        <div onClick={prev} style={{ width:30, height:30, borderRadius:8, background:PAL.bg, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <Icon name="chevL" size={16} color={PAL.ink}/>
+        </div>
+        <span style={{ fontSize:14, fontWeight:700 }}>{MONTHS[mo]} {yr}</span>
+        <div onClick={next} style={{ width:30, height:30, borderRadius:8, background:PAL.bg, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <Icon name="chevR" size={16} color={PAL.ink}/>
+        </div>
+      </div>
+      {/* Headers L M M J V S D */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', marginBottom:4 }}>
+        {['L','M','M','J','V','S','D'].map((h,i) => (
+          <div key={i} style={{ textAlign:'center', fontSize:10, fontWeight:700, color:PAL.inkSoft, padding:'3px 0' }}>{h}</div>
+        ))}
+      </div>
+      {/* Days */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2 }}>
+        {cells.map((d, i) => {
+          if (!d) return <div key={i}/>;
+          const sel = isStart(d) || isEnd(d);
+          const rng = inRange(d);
+          const past = isPast(d);
+          return (
+            <div key={i} onClick={() => handleDay(d)} style={{
+              textAlign:'center', padding:'7px 0', cursor: past ? 'default' : 'pointer',
+              borderRadius: sel ? 9 : (rng ? 0 : 9),
+              background: sel ? PAL.blue : (rng ? PAL.blueSoft : 'transparent'),
+              color: past ? PAL.line : (sel ? '#fff' : (rng ? PAL.blue : PAL.ink)),
+              fontWeight: sel ? 700 : 400,
+              fontSize: 13,
+            }}>{d}</div>
+          );
+        })}
+      </div>
+      {/* Summary */}
+      {(startDate || endDate) && (
+        <div style={{ marginTop:10, padding:'8px 10px', background:PAL.blueSoft, borderRadius:10, fontSize:12, color:PAL.blueInk, fontWeight:500 }}>
+          {startDate && <span>Del <b>{startDate}</b></span>}
+          {endDate   && <span> al <b>{endDate}</b></span>}
+          {startDate && !endDate && <span style={{ color:PAL.inkSoft }}> — Elegí la fecha de regreso</span>}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ═════════════════════════════════════════════════════════════
 // SCREEN NEW TRIP — Crear o unirse a un viaje
 // ═════════════════════════════════════════════════════════════
 const ScreenNewTrip = ({ currentUser, onTripReady }) => {
-  const [mode, setMode]         = React.useState(null); // null | 'create' | 'join'
+  const [mode, setMode]         = React.useState(null);
   const [loading, setLoading]   = React.useState(false);
   const [error, setError]       = React.useState(null);
   const [tripName, setTripName] = React.useState('');
   const [dest, setDest]         = React.useState('');
-  const [startDate, setStart]   = React.useState('');
-  const [endDate, setEnd]       = React.useState('');
+  const [dateRange, setDateRange] = React.useState({ startDate:'', endDate:'' });
+  const [showCal, setShowCal]   = React.useState(false);
   const [code, setCode]         = React.useState('');
 
   const firstName = currentUser?.displayName?.split(' ')[0] || 'viajero';
@@ -374,7 +519,7 @@ const ScreenNewTrip = ({ currentUser, onTripReady }) => {
     if (!tripName.trim()) { setError('Ponele un nombre al viaje.'); return; }
     setLoading(true); setError(null);
     try {
-      const id = await createTrip({ name:tripName.trim(), destination:dest.trim(), startDate:startDate.trim(), endDate:endDate.trim() }, currentUser);
+      const id = await createTrip({ name:tripName.trim(), destination:dest.trim(), startDate:dateRange.startDate, endDate:dateRange.endDate }, currentUser);
       onTripReady(id);
     } catch(e) { setError('No se pudo crear. Intentá de nuevo.'); setLoading(false); }
   };
@@ -388,6 +533,10 @@ const ScreenNewTrip = ({ currentUser, onTripReady }) => {
     } catch(e) { setError(e.message || 'Código inválido.'); setLoading(false); }
   };
 
+  const dateLabel = (v, ph) => v
+    ? <span style={{ fontSize:14, fontWeight:600, color:PAL.ink }}>{v}</span>
+    : <span style={{ fontSize:14, color:PAL.inkSoft }}>{ph}</span>;
+
   if (mode === 'create') return (
     <Phone bg={PAL.bg}>
       <div style={{ padding:'12px 18px', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
@@ -396,24 +545,35 @@ const ScreenNewTrip = ({ currentUser, onTripReady }) => {
         </div>
         <div style={{ fontSize:17, fontWeight:700 }}>Nuevo viaje</div>
       </div>
-      <div style={{ flex:1, padding:'8px 20px', display:'flex', flexDirection:'column', gap:16, overflow:'hidden' }}>
+      <div style={{ flex:1, padding:'8px 20px', display:'flex', flexDirection:'column', gap:14, overflowY:'auto' }}>
         <div>
           <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:8 }}>Nombre del viaje *</div>
           <input style={inp} placeholder="Ej: Patagonia con los pibes" value={tripName} onChange={e => setTripName(e.target.value)}/>
         </div>
         <div>
           <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:8 }}>Destino</div>
-          <input style={inp} placeholder="Ej: Bariloche" value={dest} onChange={e => setDest(e.target.value)}/>
+          <PlacesInput value={dest} onChange={setDest} placeholder="Ej: Bariloche, Argentina" inputStyle={inp}/>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-          <div>
-            <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:8 }}>Desde</div>
-            <input style={inp} placeholder="14 feb 2026" value={startDate} onChange={e => setStart(e.target.value)}/>
+        <div>
+          <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:8 }}>Fechas</div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom: showCal ? 12 : 0 }}>
+            {[
+              { label:'Desde', val:dateRange.startDate, ph:'Día de salida' },
+              { label:'Hasta', val:dateRange.endDate,   ph:'Día de regreso' },
+            ].map(f => (
+              <div key={f.label} onClick={() => setShowCal(v=>!v)} style={{ background:PAL.white, borderRadius:14, padding:'12px 14px', border:`1.5px solid ${showCal ? PAL.blue : PAL.line}`, cursor:'pointer' }}>
+                <div style={{ fontSize:10, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.4, marginBottom:4 }}>{f.label}</div>
+                {dateLabel(f.val, f.ph)}
+              </div>
+            ))}
           </div>
-          <div>
-            <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:8 }}>Hasta</div>
-            <input style={inp} placeholder="25 feb 2026" value={endDate} onChange={e => setEnd(e.target.value)}/>
-          </div>
+          {showCal && (
+            <DateRangePicker
+              startDate={dateRange.startDate}
+              endDate={dateRange.endDate}
+              onChange={dr => { setDateRange(dr); if (dr.startDate && dr.endDate) setShowCal(false); }}
+            />
+          )}
         </div>
       </div>
       <div style={{ padding:'12px 20px 22px', flexShrink:0 }}>
@@ -520,7 +680,7 @@ const Screen1_Trips = ({ navigate = () => {}, currentUser = null, currentTrip = 
               <div style={{ position: 'absolute', top: -3, right: -3, width: 10, height: 10, borderRadius: '50%', background: PAL.orange, border: '2px solid #1565C0' }}/>
             </div>
           </Shake>
-          <Avatar p={GROUP[0]} size={36}/>
+          <Avatar p={{ photoURL: currentUser?.photoURL, initial: firstName.charAt(0).toUpperCase(), color: PAL.orange }} size={36}/>
         </div>
       </div>
       <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: -0.6, lineHeight: 1.1 }}>Próximos viajes</div>

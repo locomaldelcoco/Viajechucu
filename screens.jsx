@@ -685,7 +685,7 @@ const Screen1_Trips = ({ navigate = () => {}, currentUser = null, currentTrip = 
               <div style={{ position: 'absolute', top: -3, right: -3, width: 10, height: 10, borderRadius: '50%', background: PAL.orange, border: '2px solid #1565C0' }}/>
             </div>
           </Shake>
-          <Avatar p={{ photoURL: userPhoto, initial: firstName.charAt(0).toUpperCase(), color: PAL.orange }} size={36}/>
+          <Avatar p={{ photoURL: userPhoto, initial: 'H', color: PAL.orange }} size={36}/>
         </div>
       </div>
       <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: -0.6, lineHeight: 1.1 }}>Próximos viajes</div>

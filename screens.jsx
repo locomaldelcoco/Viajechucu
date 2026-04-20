@@ -136,10 +136,13 @@ const Tap = ({ children }) => {
 
 // ─── Avatar pieces ───────────────────────────────────────────
 const Avatar = ({ p, size = 30, ring = false, ringColor = '#fff' }) => {
-  if (p.photoURL) return (
+  const [imgErr, setImgErr] = React.useState(false);
+  const borderStyle = ring ? `2px solid ${ringColor}` : 'none';
+  if (p.photoURL && !imgErr) return (
     <img src={p.photoURL} alt={p.name || p.initial}
-      style={{ width:size, height:size, borderRadius:'50%', objectFit:'cover', flexShrink:0,
-        border: ring ? `2px solid ${ringColor}` : 'none' }}
+      referrerPolicy="no-referrer"
+      onError={() => setImgErr(true)}
+      style={{ width:size, height:size, borderRadius:'50%', objectFit:'cover', flexShrink:0, border:borderStyle }}
     />
   );
   return (
@@ -147,7 +150,7 @@ const Avatar = ({ p, size = 30, ring = false, ringColor = '#fff' }) => {
       width:size, height:size, borderRadius:'50%', background: p.color || '#888',
       color:'#fff', display:'flex', alignItems:'center', justifyContent:'center',
       fontWeight:700, fontSize:size * 0.42,
-      border: ring ? `2px solid ${ringColor}` : 'none', flexShrink:0,
+      border: borderStyle, flexShrink:0,
     }}>{p.initial}</div>
   );
 };

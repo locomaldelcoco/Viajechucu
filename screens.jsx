@@ -1640,46 +1640,69 @@ const Screen8_Group = ({ navigate = () => {}, currentUser = null, currentTrip = 
 // ═════════════════════════════════════════════════════════════
 // SCREEN 9 — Activity detail + RSVP + voting
 // ═════════════════════════════════════════════════════════════
-const Screen9_ActivityDetail = ({ navigate = () => {}, activity = {}, day = 14, onVote = () => {}, onDelete = () => {} }) => {
-  const [rsvp, setRsvp] = React.useState('going');
-  const [voted, setVoted] = React.useState(false);
-  const [votes, setVotes] = React.useState(activity.votes || 0);
+const Screen9_ActivityDetail = ({ navigate = () => {}, activity = {}, currentTrip = null, currentUser = null }) => {
+  const [rsvp, setRsvp]               = React.useState('going');
+  const [localVotes, setLocalVotes]   = React.useState(activity.votes || {});
   const [confirmDelete, setConfirmDelete] = React.useState(false);
-  const isAdmin = true;
-  const dayLabel = _DAY_LABELS[_DAYS.indexOf(day)] || '';
+  const [deleting, setDeleting]       = React.useState(false);
 
-  const handleVote = () => {
-    const next = !voted;
-    setVoted(next);
-    setVotes(v => next ? Math.min(v + 1, 4) : Math.max(v - 1, 0));
-    onVote(activity.id);
+  const isAdmin   = currentTrip?.members?.[currentUser?.uid]?.role === 'admin';
+  const myVote    = !!(localVotes[currentUser?.uid]);
+  const voteCount = Object.keys(localVotes).length;
+  const memberCount = Object.keys(currentTrip?.members || {}).length;
+
+  const propObj = {
+    name:     activity.proposer?.name    || 'Alguien',
+    photoURL: activity.proposer?.photoURL || null,
+    initial:  (activity.proposer?.name   || 'A')[0].toUpperCase(),
+    color:    PAL.inkSoft,
   };
 
-  const handleDelete = () => {
-    onDelete(activity.id);
-    navigate('plan');
+  // Voters: match vote UIDs to trip member data for avatars
+  const COLORS = ['#FF6B35','#1FA2D8','#F4B941','#2E9E6A'];
+  const voters = Object.keys(localVotes).map((uid, i) => {
+    const m = currentTrip?.members?.[uid];
+    return m
+      ? { name: m.name, photoURL: m.photoURL || null, initial: m.name[0].toUpperCase(), color: COLORS[i % 4] }
+      : { name: 'Viajero', photoURL: null, initial: '?', color: COLORS[i % 4] };
+  });
+
+  const handleVote = async () => {
+    if (!currentUser?.uid || !currentTrip?.id) return;
+    const next = { ...localVotes };
+    if (myVote) delete next[currentUser.uid]; else next[currentUser.uid] = true;
+    setLocalVotes(next);
+    try { await toggleVote(currentTrip.id, activity.id, currentUser.uid, myVote); }
+    catch(e) { console.error('Vote error:', e); setLocalVotes(localVotes); }
+  };
+
+  const handleDelete = async () => {
+    if (!currentTrip?.id) return;
+    setDeleting(true);
+    try { await removeActivity(currentTrip.id, activity.id); navigate('plan'); }
+    catch(e) { console.error('Delete error:', e); setDeleting(false); setConfirmDelete(false); }
   };
 
   const rsvpOpts = [
-    { k:'going',    label:'Voy',    icon:'check',    activeColor:PAL.green,    activeBg:PAL.greenSoft },
-    { k:'maybe',    label:'Tal vez', icon:'question', activeColor:PAL.yellow,   activeBg:PAL.yellowSoft },
-    { k:'notgoing', label:'No voy',  icon:'cross',    activeColor:PAL.red,      activeBg:'#FBE5E5' },
+    { k:'going',    label:'Voy',     icon:'check',    activeColor:PAL.green,  activeBg:PAL.greenSoft },
+    { k:'maybe',    label:'Tal vez', icon:'question', activeColor:PAL.yellow, activeBg:PAL.yellowSoft },
+    { k:'notgoing', label:'No voy',  icon:'cross',    activeColor:PAL.red,    activeBg:'#FBE5E5' },
   ];
 
-  if (!activity.title) {
-    return (
-      <Phone bg={PAL.bg}>
-        <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <span style={{ color:PAL.inkSoft }}>Sin actividad</span>
-        </div>
-      </Phone>
-    );
-  }
+  if (!activity.title) return (
+    <Phone bg={PAL.bg}>
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <span style={{ color:PAL.inkSoft }}>Sin actividad</span>
+      </div>
+    </Phone>
+  );
+
+  const headerColor = activity.color || PAL.blue;
 
   return (
     <Phone bg={PAL.bg}>
       {/* Header */}
-      <div style={{ background:activity.color, padding:'14px 16px 28px', position:'relative', overflow:'hidden' }}>
+      <div style={{ background:headerColor, padding:'14px 16px 28px', position:'relative', overflow:'hidden' }}>
         <div style={{ position:'absolute', right:-30, top:-30, width:120, height:120, borderRadius:'50%', background:'rgba(255,255,255,0.12)' }}/>
         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
           <Tap>
@@ -1689,63 +1712,63 @@ const Screen9_ActivityDetail = ({ navigate = () => {}, activity = {}, day = 14, 
           </Tap>
           <div style={{ flex:1 }}/>
           {isAdmin && (
-            <>
-              <Shake>
-                <div style={{ width:36, height:36, borderRadius:10, background:'rgba(255,255,255,0.22)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <Icon name="edit" size={17} color="#fff"/>
-                </div>
-              </Shake>
-              <div onClick={() => setConfirmDelete(true)} style={{ width:36, height:36, borderRadius:10, background:'rgba(255,255,255,0.22)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
-                <Icon name="trash" size={17} color="#fff"/>
-              </div>
-            </>
+            <div onClick={() => setConfirmDelete(true)} style={{ width:36, height:36, borderRadius:10, background:'rgba(255,255,255,0.22)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+              <Icon name="trash" size={17} color="#fff"/>
+            </div>
           )}
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
           <div style={{ width:44, height:44, borderRadius:14, background:'rgba(255,255,255,0.25)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <Icon name={activity.icon} size={24} color="#fff" stroke={2}/>
+            <Icon name={activity.icon || 'star'} size={24} color="#fff" stroke={2}/>
           </div>
           <div>
             <div style={{ fontSize:20, fontWeight:700, color:'#fff', letterSpacing:-0.3 }}>{activity.title}</div>
-            <div style={{ fontSize:12, color:'rgba(255,255,255,0.8)', marginTop:2 }}>{activity.place}</div>
+            {activity.place && <div style={{ fontSize:12, color:'rgba(255,255,255,0.8)', marginTop:2 }}>{activity.place}</div>}
           </div>
         </div>
       </div>
 
       {/* Body */}
-      <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', gap:14, padding:'16px 18px' }}>
+      <div style={{ flex:1, overflowY:'auto', display:'flex', flexDirection:'column', gap:12, padding:'16px 18px' }}>
 
         {/* Meta row */}
         <div style={{ display:'flex', gap:8 }}>
-          <div style={{ flex:1, background:PAL.white, borderRadius:14, padding:'10px 12px', border:`1px solid ${PAL.line}`, display:'flex', alignItems:'center', gap:8 }}>
-            <Icon name="calendar" size={16} color={PAL.inkSoft}/>
-            <div>
-              <div style={{ fontSize:10, color:PAL.inkSoft, fontWeight:600, textTransform:'uppercase', letterSpacing:0.4 }}>Día</div>
-              <div style={{ fontSize:13, fontWeight:700 }}>{dayLabel} {day} feb</div>
+          {activity.day && (
+            <div style={{ flex:1, background:PAL.white, borderRadius:14, padding:'10px 12px', border:`1px solid ${PAL.line}`, display:'flex', alignItems:'center', gap:8 }}>
+              <Icon name="calendar" size={16} color={PAL.inkSoft}/>
+              <div>
+                <div style={{ fontSize:10, color:PAL.inkSoft, fontWeight:600, textTransform:'uppercase', letterSpacing:0.4 }}>Día</div>
+                <div style={{ fontSize:13, fontWeight:700 }}>{dayLabel(activity.day)} {dayNum(activity.day)}</div>
+              </div>
             </div>
-          </div>
-          <div style={{ flex:1, background:PAL.white, borderRadius:14, padding:'10px 12px', border:`1px solid ${PAL.line}`, display:'flex', alignItems:'center', gap:8 }}>
-            <Icon name="clock" size={16} color={PAL.inkSoft}/>
-            <div>
-              <div style={{ fontSize:10, color:PAL.inkSoft, fontWeight:600, textTransform:'uppercase', letterSpacing:0.4 }}>Hora</div>
-              <div style={{ fontSize:13, fontWeight:700 }}>{activity.t}</div>
+          )}
+          {activity.time && activity.time !== '—' && (
+            <div style={{ flex:1, background:PAL.white, borderRadius:14, padding:'10px 12px', border:`1px solid ${PAL.line}`, display:'flex', alignItems:'center', gap:8 }}>
+              <Icon name="clock" size={16} color={PAL.inkSoft}/>
+              <div>
+                <div style={{ fontSize:10, color:PAL.inkSoft, fontWeight:600, textTransform:'uppercase', letterSpacing:0.4 }}>Hora</div>
+                <div style={{ fontSize:13, fontWeight:700 }}>{activity.time}</div>
+              </div>
             </div>
-          </div>
-          <div style={{ flex:1, background:PAL.white, borderRadius:14, padding:'10px 12px', border:`1px solid ${PAL.line}`, display:'flex', alignItems:'center', gap:8 }}>
-            <Icon name="dollar" size={16} color={PAL.inkSoft}/>
-            <div>
-              <div style={{ fontSize:10, color:PAL.inkSoft, fontWeight:600, textTransform:'uppercase', letterSpacing:0.4 }}>Costo</div>
-              <div style={{ fontSize:13, fontWeight:700 }}>{activity.cost}</div>
+          )}
+          {activity.cost && (
+            <div style={{ flex:1, background:PAL.white, borderRadius:14, padding:'10px 12px', border:`1px solid ${PAL.line}`, display:'flex', alignItems:'center', gap:8 }}>
+              <Icon name="dollar" size={16} color={PAL.inkSoft}/>
+              <div>
+                <div style={{ fontSize:10, color:PAL.inkSoft, fontWeight:600, textTransform:'uppercase', letterSpacing:0.4 }}>Costo</div>
+                <div style={{ fontSize:13, fontWeight:700 }}>{activity.cost}</div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Status + proposer */}
+        {/* Proposer */}
         <div style={{ background:PAL.white, borderRadius:14, padding:'12px 14px', border:`1px solid ${PAL.line}`, display:'flex', alignItems:'center', gap:10 }}>
-          <StatusChip status={activity.status}/>
-          <div style={{ flex:1 }}/>
-          <Avatar p={activity.proposer || GROUP[0]} size={26}/>
-          <span style={{ fontSize:12, color:PAL.inkSoft }}>Propuso <b style={{ color:PAL.ink }}>{(activity.proposer || GROUP[0]).name}</b></span>
+          <Avatar p={propObj} size={28}/>
+          <div>
+            <div style={{ fontSize:11, color:PAL.inkSoft, fontWeight:600 }}>Propuesto por</div>
+            <div style={{ fontSize:14, fontWeight:700, color:PAL.ink }}>{propObj.name}</div>
+          </div>
         </div>
 
         {/* Notes */}
@@ -1756,49 +1779,32 @@ const Screen9_ActivityDetail = ({ navigate = () => {}, activity = {}, day = 14, 
           </div>
         ) : null}
 
-        {/* Who's going */}
-        {activity.going && (
-          <div style={{ background:PAL.white, borderRadius:14, padding:'12px 14px', border:`1px solid ${PAL.line}` }}>
-            <div style={{ fontSize:10, color:PAL.inkSoft, fontWeight:700, textTransform:'uppercase', letterSpacing:0.5, marginBottom:10 }}>Participantes</div>
-            <div style={{ display:'flex', gap:10 }}>
-              {activity.going.map(p => (
-                <div key={p.id} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5 }}>
-                  <Avatar p={p} size={36} ring ringColor={PAL.greenSoft}/>
-                  <div style={{ width:16, height:16, borderRadius:'50%', background:PAL.greenSoft, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                    <Icon name="check" size={9} color={PAL.green} stroke={2.8}/>
-                  </div>
-                </div>
-              ))}
-              {(activity.notGoing || []).map(p => (
-                <div key={p.id} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5, opacity:0.5 }}>
-                  <Avatar p={p} size={36}/>
-                  <div style={{ width:16, height:16, borderRadius:'50%', background:'#FBE5E5', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                    <Icon name="cross" size={9} color={PAL.red} stroke={2.5}/>
-                  </div>
-                </div>
-              ))}
+        {/* Votes */}
+        <div style={{ background:PAL.white, borderRadius:14, padding:'12px 14px', border:`1px solid ${PAL.line}` }}>
+          <div style={{ fontSize:10, color:PAL.inkSoft, fontWeight:700, textTransform:'uppercase', letterSpacing:0.5, marginBottom:10 }}>Interés del grupo</div>
+          <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom: voters.length > 0 ? 12 : 0 }}>
+            <div style={{ flex:1, height:8, borderRadius:4, background:PAL.line, overflow:'hidden' }}>
+              <div style={{ height:'100%', width:`${memberCount > 0 ? (voteCount/memberCount)*100 : 0}%`, background:myVote ? PAL.red : PAL.orange, borderRadius:4, transition:'width 0.3s' }}/>
             </div>
-          </div>
-        )}
-
-        {/* Voting (only for voting-status) */}
-        {activity.status === 'voting' && (
-          <div style={{ background:PAL.white, borderRadius:14, padding:'12px 14px', border:`1px solid ${PAL.line}` }}>
-            <div style={{ fontSize:10, color:PAL.inkSoft, fontWeight:700, textTransform:'uppercase', letterSpacing:0.5, marginBottom:10 }}>Votación</div>
-            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-              <div style={{ flex:1, height:8, borderRadius:4, background:PAL.line, overflow:'hidden' }}>
-                <div style={{ height:'100%', width:`${(votes/4)*100}%`, background:voted ? PAL.red : PAL.orange, borderRadius:4, transition:'width 0.3s' }}/>
+            <span style={{ fontSize:13, fontWeight:700, color: myVote ? PAL.red : PAL.ink, minWidth:32 }}>{voteCount}/{memberCount}</span>
+            <Tap>
+              <div onClick={handleVote} style={{ display:'flex', alignItems:'center', gap:6, background: myVote ? '#FBE5E5' : PAL.orangeSoft, padding:'8px 14px', borderRadius:10, cursor:'pointer' }}>
+                <Icon name="heart" size={17} color={myVote ? PAL.red : PAL.orange} stroke={myVote ? 2.5 : 1.8}/>
+                <span style={{ fontSize:13, fontWeight:700, color: myVote ? PAL.red : PAL.orangeInk }}>{myVote ? 'Votado' : 'Votar'}</span>
               </div>
-              <span style={{ fontSize:13, fontWeight:700, color: voted ? PAL.red : PAL.ink }}>{votes}/4</span>
-              <Tap>
-                <div onClick={handleVote} style={{ display:'flex', alignItems:'center', gap:6, background: voted ? '#FBE5E5' : PAL.orangeSoft, padding:'8px 14px', borderRadius:10, cursor:'pointer' }}>
-                  <Icon name="heart" size={17} color={voted ? PAL.red : PAL.orange} stroke={voted ? 2.5 : 1.8}/>
-                  <span style={{ fontSize:13, fontWeight:700, color: voted ? PAL.red : PAL.orangeInk }}>{voted ? 'Votado' : 'Votar'}</span>
-                </div>
-              </Tap>
-            </div>
+            </Tap>
           </div>
-        )}
+          {voters.length > 0 && (
+            <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+              {voters.map((v, i) => (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:5 }}>
+                  <Avatar p={v} size={26} ring ringColor={PAL.orangeSoft}/>
+                  <span style={{ fontSize:11, color:PAL.inkSoft }}>{v.name.split(' ')[0]}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* RSVP bar */}
@@ -1832,7 +1838,7 @@ const Screen9_ActivityDetail = ({ navigate = () => {}, activity = {}, day = 14, 
             <div style={{ fontSize:13, color:PAL.inkSoft, marginBottom:18 }}>"{activity.title}" se eliminará del plan.</div>
             <div style={{ display:'flex', gap:10 }}>
               <div onClick={() => setConfirmDelete(false)} style={{ flex:1, padding:'12px', borderRadius:12, border:`1px solid ${PAL.line}`, fontSize:14, fontWeight:700, cursor:'pointer', textAlign:'center' }}>Cancelar</div>
-              <div onClick={handleDelete} style={{ flex:1, padding:'12px', borderRadius:12, background:PAL.red, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', textAlign:'center' }}>Eliminar</div>
+              <div onClick={deleting ? undefined : handleDelete} style={{ flex:1, padding:'12px', borderRadius:12, background: deleting ? PAL.line : PAL.red, color:'#fff', fontSize:14, fontWeight:700, cursor: deleting ? 'default' : 'pointer', textAlign:'center' }}>{deleting ? '…' : 'Eliminar'}</div>
             </div>
           </div>
         </div>
@@ -2047,7 +2053,6 @@ const ScreenMap = ({ navigate = () => {} }) => {
 Object.assign(window, {
   Screen0_Login, ScreenNewTrip,
   Screen1_Trips, Screen2_Plan, Screen3_TypePick,
-  Screen4_Form, Screen5_Invite, Screen6_Posted,
-  Screen7_Profile, Screen8_Group, Screen9_ActivityDetail,
-  ScreenMap,
+  Screen4_Form, Screen7_Profile, Screen8_Group,
+  Screen9_ActivityDetail, ScreenMap,
 });

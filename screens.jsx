@@ -651,6 +651,8 @@ const ScreenNewTrip = ({ currentUser, onTripReady }) => {
 // ═════════════════════════════════════════════════════════════
 const Screen1_Trips = ({ navigate = () => {}, currentUser = null, currentTrip = null }) => {
   const firstName   = currentUser?.displayName?.split(' ')[0] || 'viajero';
+  const userPhoto   = currentUser?.photoURL || currentUser?.providerData?.[0]?.photoURL || null;
+  console.log('[Avatar debug] photoURL:', currentUser?.photoURL, '| providerData[0]:', currentUser?.providerData?.[0]?.photoURL);
   const tripName    = currentTrip?.name        || 'Mi viaje';
   const tripDest    = currentTrip?.destination || '';
   const tripDates   = [currentTrip?.startDate, currentTrip?.endDate].filter(Boolean).join(' al ');
@@ -683,7 +685,7 @@ const Screen1_Trips = ({ navigate = () => {}, currentUser = null, currentTrip = 
               <div style={{ position: 'absolute', top: -3, right: -3, width: 10, height: 10, borderRadius: '50%', background: PAL.orange, border: '2px solid #1565C0' }}/>
             </div>
           </Shake>
-          <Avatar p={{ photoURL: currentUser?.photoURL, initial: firstName.charAt(0).toUpperCase(), color: PAL.orange }} size={36}/>
+          <Avatar p={{ photoURL: userPhoto, initial: firstName.charAt(0).toUpperCase(), color: PAL.orange }} size={36}/>
         </div>
       </div>
       <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: -0.6, lineHeight: 1.1 }}>Próximos viajes</div>

@@ -182,29 +182,60 @@ const AvatarStack = ({ people, size = 28, max = 4, bg = '#fff' }) => {
 // ─── Status bar / nav ────────────────────────────────────────
 const StatusBar = ({ dark = false, tint }) => {
   const c = dark ? '#fff' : (tint || PAL.ink);
+
+  const [time, setTime]     = React.useState('');
+  const [online, setOnline] = React.useState(navigator.onLine);
+  const [battery, setBattery] = React.useState(null);
+
+  React.useEffect(() => {
+    const fmt = () => {
+      const d = new Date();
+      return `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+    };
+    setTime(fmt());
+    const t = setInterval(() => setTime(fmt()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  React.useEffect(() => {
+    const on  = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    if (navigator.getBattery) {
+      navigator.getBattery().then(b => {
+        setBattery(b.level);
+        b.addEventListener('levelchange', () => setBattery(b.level));
+      });
+    }
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
+  }, []);
+
+  const battPct = battery !== null ? Math.round(battery * 100) : 75;
+
   return (
     <div style={{
       height: 36, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '0 22px', fontFamily: FONT, fontSize: 14, fontWeight: 600, color: c,
       position: 'relative', flexShrink: 0,
     }}>
-      <span>9:41</span>
+      <span>{time}</span>
       <div style={{
         position: 'absolute', left: '50%', top: 6, transform: 'translateX(-50%)',
         width: 22, height: 22, borderRadius: 100, background: dark ? '#000' : '#1d1d1d',
       }}/>
       <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-        <svg width="16" height="11" viewBox="0 0 16 11" fill={c}>
+        {/* Connectivity */}
+        <svg width="16" height="11" viewBox="0 0 16 11" fill={online ? c : PAL.red} opacity={online ? 1 : 0.8}>
           <path d="M8 10.5L.67 3.17a10.37 10.37 0 0114.66 0L8 10.5z"/>
         </svg>
+        {/* Signal bars (static) */}
         <svg width="15" height="11" viewBox="0 0 16 11" fill={c}>
           <path d="M14.67 10.67V0L0 10.67h14.67z"/>
         </svg>
-        <div style={{
-          width: 22, height: 11, border: `1.3px solid ${c}`, borderRadius: 3,
-          position: 'relative', opacity: 0.95,
-        }}>
-          <div style={{ position: 'absolute', inset: 1.5, width: '75%', background: c, borderRadius: 1 }}/>
+        {/* Battery */}
+        <div style={{ width: 22, height: 11, border: `1.3px solid ${c}`, borderRadius: 3, position: 'relative', opacity: 0.95 }}>
+          <div style={{ position: 'absolute', inset: 1.5, width: `${battPct}%`, background: battPct < 20 ? PAL.red : c, borderRadius: 1 }}/>
           <div style={{ position: 'absolute', right: -3, top: 3, width: 2, height: 5, background: c, borderRadius: 1 }}/>
         </div>
       </div>

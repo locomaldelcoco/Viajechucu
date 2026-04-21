@@ -138,9 +138,18 @@ async function toggleVote(tripId, actId, uid, hasVoted) {
   });
 }
 
+async function updateRsvp(tripId, actId, uid, status) {
+  const ref = FB_DB.collection('trips').doc(tripId).collection('activities').doc(actId);
+  await ref.update({
+    [`rsvp.${uid}`]: status === null
+      ? firebase.firestore.FieldValue.delete()
+      : status,
+  });
+}
+
 Object.assign(window, {
   FB_AUTH, FB_DB,
   signInWithGoogle, fbSignOut,
   createTrip, joinTrip, getUserTrip, getTrip, removeTripMember, deleteTrip,
-  getActivities, addActivity, removeActivity, toggleVote,
+  getActivities, addActivity, removeActivity, toggleVote, updateRsvp,
 });

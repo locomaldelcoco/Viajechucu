@@ -1719,7 +1719,7 @@ const Screen8_Group = ({ navigate = () => {}, currentUser = null, currentTrip = 
 // SCREEN 9 — Activity detail + RSVP + voting
 // ═════════════════════════════════════════════════════════════
 const Screen9_ActivityDetail = ({ navigate = () => {}, activity = {}, currentTrip = null, currentUser = null }) => {
-  const [rsvp, setRsvp]               = React.useState('going');
+  const [rsvp, setRsvp]               = React.useState(activity.rsvp?.[currentUser?.uid] || null);
   const [localVotes, setLocalVotes]   = React.useState(activity.votes || {});
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [deleting, setDeleting]       = React.useState(false);
@@ -1752,6 +1752,14 @@ const Screen9_ActivityDetail = ({ navigate = () => {}, activity = {}, currentTri
     setLocalVotes(next);
     try { await toggleVote(currentTrip.id, activity.id, currentUser.uid, myVote); }
     catch(e) { console.error('Vote error:', e); setLocalVotes(localVotes); }
+  };
+
+  const handleRsvp = async (status) => {
+    const prev = rsvp;
+    const next = rsvp === status ? null : status;
+    setRsvp(next);
+    try { await updateRsvp(currentTrip.id, activity.id, currentUser.uid, next); }
+    catch(e) { console.error('RSVP error:', e); setRsvp(prev); }
   };
 
   const handleDelete = async () => {
@@ -1893,7 +1901,7 @@ const Screen9_ActivityDetail = ({ navigate = () => {}, activity = {}, currentTri
             const active = rsvp === o.k;
             return (
               <Tap key={o.k}>
-                <div onClick={() => setRsvp(o.k)} style={{
+                <div onClick={() => handleRsvp(o.k)} style={{
                   flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:5,
                   padding:'10px 6px', borderRadius:14, cursor:'pointer', transition:'all 0.15s',
                   background: active ? o.activeBg : PAL.bg,

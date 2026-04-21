@@ -65,7 +65,7 @@ const ViajeroApp = () => {
     profile:           <Screen7_Profile navigate={navigate} currentUser={authUser} currentTrip={currentTrip} />,
     group:             <Screen8_Group   navigate={navigate} currentUser={authUser} currentTrip={currentTrip} onTripUpdate={onTripUpdate} />,
     'activity-detail': <Screen9_ActivityDetail navigate={navigate} currentTrip={currentTrip} currentUser={authUser} {...navParams} />,
-    map:               <ScreenMap navigate={navigate} />,
+    map:               <ScreenMap navigate={navigate} currentTrip={currentTrip} />,
   };
 
   return (

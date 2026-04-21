@@ -1814,194 +1814,45 @@ const Screen9_ActivityDetail = ({ navigate = () => {}, activity = {}, currentTri
 // ═════════════════════════════════════════════════════════════
 // SCREEN MAP — Mapa del viaje
 // ═════════════════════════════════════════════════════════════
-const ScreenMap = ({ navigate = () => {} }) => {
-  const [selected, setSelected] = React.useState(0);
-
-  const places = [
-    { id:0, name:'Bariloche',      sub:'Base del viaje · 5 noches', color:PAL.blue,     icon:'bed',    x:43, y:42, activities:6, going:GROUP,                         dist:'—',    dur:'—'    },
-    { id:1, name:'Cerro Catedral', sub:'Trekking Refugio Frey',     color:PAL.orange,   icon:'hike',   x:60, y:27, activities:2, going:[GROUP[0],GROUP[1],GROUP[2]],   dist:'19 km', dur:'25 min'},
-    { id:2, name:'El Bolsón',      sub:'Asado · feria artesanal',   color:PAL.green,    icon:'asado',  x:27, y:62, activities:3, going:GROUP,                          dist:'120 km',dur:'1 h 40'},
-    { id:3, name:'Lago Gutiérrez', sub:'Kayak · día 2',             color:'#5B7FBF',    icon:'hike',   x:55, y:55, activities:1, going:GROUP,                          dist:'8 km',  dur:'12 min'},
-  ];
-
-  const sel = places[selected];
-
-  // Ruta en orden: 1→0→3→2
-  const routeOrder = [1,0,3,2];
-  const routePts = routeOrder.map(i => places[i]);
+const ScreenMap = ({ navigate = () => {}, currentTrip = null }) => {
+  const destination = currentTrip?.destination || currentTrip?.name || '';
+  const mapSrc = destination
+    ? `https://maps.google.com/maps?q=${encodeURIComponent(destination)}&output=embed&z=13`
+    : null;
 
   return (
-    <Phone bg="#E8E4DC">
+    <Phone bg={PAL.bg}>
+      <StatusBar />
 
-      {/* Barra de búsqueda flotante */}
-      <div style={{ position:'absolute', top:40, left:16, right:16, zIndex:20 }}>
-        <div style={{ background:'#fff', borderRadius:14, padding:'10px 14px', display:'flex', alignItems:'center', gap:10, boxShadow:'0 4px 20px rgba(0,0,0,0.18)' }}>
-          <Icon name="pin" size={18} color={PAL.orange}/>
-          <div style={{ flex:1 }}>
-            <div style={{ fontSize:13, fontWeight:700 }}>Patagonia · verano</div>
-            <div style={{ fontSize:11, color:PAL.inkSoft }}>Bariloche & El Bolsón · 4 destinos</div>
-          </div>
-          <div style={{ width:34, height:34, borderRadius:10, background:PAL.blueSoft, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <Icon name="map" size={17} color={PAL.blue}/>
-          </div>
+      {/* Header */}
+      <div style={{ padding:'0 20px 12px', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:20, fontWeight:800, letterSpacing:-0.5 }}>Mapa</div>
+          {destination && (
+            <div style={{ fontSize:12, color:PAL.inkSoft, marginTop:1, display:'flex', alignItems:'center', gap:4 }}>
+              <Icon name="pin" size={12} color={PAL.orange}/>
+              {destination}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Mapa */}
-      <div style={{ flex:1, position:'relative', overflow:'hidden', minHeight:0 }}>
-
-        {/* SVG del mapa completo */}
-        <svg style={{ position:'absolute', inset:0, width:'100%', height:'100%' }} viewBox="0 0 390 440" preserveAspectRatio="xMidYMid slice">
-          {/* Fondo base beige */}
-          <rect width="390" height="440" fill="#E8E4DC"/>
-          {/* Bosques / parques */}
-          <ellipse cx="80"  cy="80"  rx="70" ry="55"  fill="#C8DBA8" opacity="0.8"/>
-          <ellipse cx="300" cy="60"  rx="90" ry="50"  fill="#BDD49E" opacity="0.7"/>
-          <ellipse cx="320" cy="200" rx="60" ry="80"  fill="#C2D8A4" opacity="0.6"/>
-          <ellipse cx="60"  cy="300" rx="50" ry="60"  fill="#C8DBA8" opacity="0.7"/>
-          {/* Lagos */}
-          <ellipse cx="170" cy="200" rx="52" ry="38"  fill="#90C4E0" opacity="0.85"/>
-          <ellipse cx="220" cy="248" rx="28" ry="22"  fill="#7BBDDA" opacity="0.75"/>
-          <ellipse cx="105" cy="270" rx="32" ry="24"  fill="#90C4E0" opacity="0.7"/>
-          <ellipse cx="270" cy="300" rx="20" ry="28"  fill="#7BBDDA" opacity="0.65"/>
-          {/* Río */}
-          <path d="M150 180 Q130 220 108 270" stroke="#7BBDDA" strokeWidth="5" fill="none" opacity="0.7"/>
-          <path d="M220 248 Q240 280 270 300" stroke="#7BBDDA" strokeWidth="4" fill="none" opacity="0.65"/>
-          {/* Cerros (triángulos) */}
-          <polygon points="240,30 255,65 225,65" fill="#A89880" opacity="0.55"/>
-          <polygon points="268,22 288,62 248,62" fill="#9E8E78" opacity="0.6"/>
-          <polygon points="295,35 312,68 278,68" fill="#A89880" opacity="0.5"/>
-          <polygon points="320,18 342,60 298,60" fill="#9E8E78" opacity="0.55"/>
-          {/* Calles secundarias */}
-          <line x1="0"   y1="150" x2="390" y2="150" stroke="#fff" strokeWidth="2.5" opacity="0.5"/>
-          <line x1="0"   y1="320" x2="390" y2="320" stroke="#fff" strokeWidth="2"   opacity="0.45"/>
-          <line x1="100" y1="0"   x2="100" y2="440" stroke="#fff" strokeWidth="2"   opacity="0.4"/>
-          <line x1="260" y1="0"   x2="260" y2="440" stroke="#fff" strokeWidth="2"   opacity="0.4"/>
-          <line x1="0"   y1="240" x2="390" y2="270" stroke="#fff" strokeWidth="1.5" opacity="0.35"/>
-          <line x1="50"  y1="0"   x2="160" y2="440" stroke="#fff" strokeWidth="1.5" opacity="0.3"/>
-          {/* Ruta principal (RN 40) */}
-          <path d="M0 360 Q100 340 165 280 Q200 240 230 200 Q260 155 320 100 Q350 75 390 60"
-            stroke="#F5C842" strokeWidth="5" fill="none" opacity="0.9"/>
-          <path d="M0 360 Q100 340 165 280 Q200 240 230 200 Q260 155 320 100 Q350 75 390 60"
-            stroke="#fff" strokeWidth="2" fill="none" opacity="0.5" strokeDasharray="8,6"/>
-          {/* Ruta secundaria */}
-          <path d="M165 280 Q140 310 105 340 Q70 370 40 390"
-            stroke="#E8C55A" strokeWidth="3.5" fill="none" opacity="0.8"/>
-          {/* Ruta del viaje animada */}
-          <path
-            d={`M${routePts[0].x*3.9} ${routePts[0].y*4.4} Q${(routePts[0].x+routePts[1].x)/2*3.9} ${(routePts[0].y+routePts[1].y)/2*4.4-20} ${routePts[1].x*3.9} ${routePts[1].y*4.4} Q${(routePts[1].x+routePts[2].x)/2*3.9} ${(routePts[1].y+routePts[2].y)/2*4.4} ${routePts[2].x*3.9} ${routePts[2].y*4.4} Q${(routePts[2].x+routePts[3].x)/2*3.9} ${(routePts[2].y+routePts[3].y)/2*4.4+10} ${routePts[3].x*3.9} ${routePts[3].y*4.4}`}
-            stroke={PAL.blue} strokeWidth="3" fill="none" strokeDasharray="6,4"
-            style={{ animation: 'routeFlow 1.2s linear infinite' }}
-            opacity="0.9"
+      {/* Mapa iframe */}
+      <div style={{ flex:1, position:'relative', overflow:'hidden', minHeight:0, borderRadius:'16px 16px 0 0' }}>
+        {mapSrc ? (
+          <iframe
+            src={mapSrc}
+            style={{ position:'absolute', inset:0, width:'100%', height:'100%', border:'none' }}
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
           />
-        </svg>
-
-        {/* Pines */}
-        {places.map((p, i) => {
-          const isSel = selected === i;
-          return (
-            <div key={p.id} onClick={() => setSelected(i)} style={{
-              position:'absolute',
-              left:`${p.x}%`, top:`${p.y}%`,
-              transform:'translate(-50%,-100%)',
-              cursor:'pointer', zIndex: isSel ? 20 : 10,
-              animation: isSel ? 'pinFloat 2s ease-in-out infinite' : 'none',
-            }}>
-              {/* Anillo pulsante */}
-              {isSel && (
-                <div style={{
-                  position:'absolute', left:'50%', bottom:0,
-                  width:44, height:44, borderRadius:'50%',
-                  transform:'translate(-50%, 50%)',
-                  background:p.color, opacity:0.25,
-                  animation:'pulseRing 1.4s ease-out infinite',
-                }}/>
-              )}
-              {/* Pin */}
-              <div style={{
-                width: isSel ? 44 : 34, height: isSel ? 44 : 34,
-                borderRadius: isSel ? 14 : 10,
-                background: isSel ? p.color : '#fff',
-                border:`3px solid ${p.color}`,
-                display:'flex', alignItems:'center', justifyContent:'center',
-                boxShadow: isSel ? `0 6px 20px ${p.color}66` : '0 2px 10px rgba(0,0,0,0.22)',
-                transition:'all 0.25s cubic-bezier(.34,1.56,.64,1)',
-              }}>
-                <Icon name={p.icon} size={isSel ? 22 : 16} color={isSel ? '#fff' : p.color} stroke={2}/>
-              </div>
-              {/* Label */}
-              {isSel && (
-                <div style={{
-                  position:'absolute', top:'100%', left:'50%', transform:'translateX(-50%)',
-                  marginTop:6, background:'#fff', borderRadius:8, padding:'3px 9px',
-                  fontSize:10, fontWeight:800, color:p.color, whiteSpace:'nowrap',
-                  boxShadow:'0 2px 8px rgba(0,0,0,0.18)',
-                }}>
-                  {p.name}
-                </div>
-              )}
-              {/* Número de actividades (no seleccionado) */}
-              {!isSel && (
-                <div style={{
-                  position:'absolute', top:-6, right:-6, width:16, height:16,
-                  borderRadius:'50%', background:p.color, color:'#fff',
-                  fontSize:9, fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center',
-                  border:'2px solid #E8E4DC',
-                }}>
-                  {p.activities}
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {/* Controles de zoom */}
-        <div style={{ position:'absolute', right:14, bottom:14, display:'flex', flexDirection:'column', gap:4 }}>
-          {['+','−'].map(z => (
-            <div key={z} style={{ width:34, height:34, borderRadius:10, background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, fontWeight:700, color:PAL.ink, boxShadow:'0 2px 8px rgba(0,0,0,0.18)', cursor:'pointer' }}>{z}</div>
-          ))}
-        </div>
-
-        {/* Badge distancia entre seleccionado y base */}
-        {selected !== 0 && (
-          <div style={{ position:'absolute', left:14, bottom:14, background:'#fff', borderRadius:10, padding:'6px 10px', boxShadow:'0 2px 10px rgba(0,0,0,0.18)', display:'flex', alignItems:'center', gap:6 }}>
-            <Icon name="plane" size={13} color={PAL.inkSoft}/>
-            <span style={{ fontSize:11, fontWeight:700, color:PAL.ink }}>{sel.dist}</span>
-            <span style={{ fontSize:11, color:PAL.inkSoft }}>· {sel.dur}</span>
+        ) : (
+          <div style={{ height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, color:PAL.inkSoft }}>
+            <Icon name="map" size={40} color={PAL.line}/>
+            <div style={{ fontSize:13 }}>Sin destino definido</div>
           </div>
         )}
-      </div>
-
-      {/* Card inferior */}
-      <div style={{ background:'#fff', borderRadius:'24px 24px 0 0', padding:'14px 18px 10px', flexShrink:0, boxShadow:'0 -8px 30px rgba(0,0,0,0.1)' }}>
-        <div style={{ width:40, height:4, borderRadius:2, background:PAL.line, margin:'0 auto 14px' }}/>
-        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:12 }}>
-          <div style={{ width:50, height:50, borderRadius:16, background:sel.color, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, boxShadow:`0 6px 16px ${sel.color}55` }}>
-            <Icon name={sel.icon} size={26} color="#fff" stroke={2}/>
-          </div>
-          <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontSize:16, fontWeight:800, letterSpacing:-0.3 }}>{sel.name}</div>
-            <div style={{ fontSize:12, color:PAL.inkSoft, marginTop:1 }}>{sel.sub}</div>
-          </div>
-          <div style={{ textAlign:'center' }}>
-            <div style={{ fontSize:22, fontWeight:800, color:sel.color, lineHeight:1 }}>{sel.activities}</div>
-            <div style={{ fontSize:9, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.4 }}>actividades</div>
-          </div>
-        </div>
-        {/* Chips de lugares */}
-        <div style={{ display:'flex', gap:7, overflowX:'auto', paddingBottom:4 }}>
-          {places.map((p, i) => (
-            <div key={p.id} onClick={() => setSelected(i)} style={{
-              flexShrink:0, padding:'6px 12px', borderRadius:100, fontSize:12, fontWeight:600,
-              cursor:'pointer', transition:'all 0.15s',
-              background: selected === i ? p.color : PAL.bg,
-              color:       selected === i ? '#fff' : PAL.inkSoft,
-              border:`1.5px solid ${selected === i ? p.color : PAL.line}`,
-            }}>
-              {p.name}
-            </div>
-          ))}
-        </div>
       </div>
 
       <TabBar active="map" onTab={k => {

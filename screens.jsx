@@ -1848,21 +1848,23 @@ const ScreenMap = ({ navigate = () => {}, currentTrip = null }) => {
       </div>
 
       {/* Mapa iframe */}
-      <div style={{ flex:1, position:'relative', overflow:'hidden', minHeight:0, borderRadius:'16px 16px 0 0' }}>
-        {mapSrc ? (
-          <iframe
-            src={mapSrc}
-            style={{ position:'absolute', inset:0, width:'100%', height:'100%', border:'none' }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
-        ) : (
+      <div style={{ flex:1, minHeight:0, padding:'0 16px 16px' }}>
+        <div style={{ height:'100%', borderRadius:20, overflow:'hidden', boxShadow:'0 4px 20px rgba(0,0,0,0.18)' }}>
+          {mapSrc ? (
+            <iframe
+              src={mapSrc}
+              style={{ width:'100%', height:'100%', border:'none', display:'block' }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          ) : (
           <div style={{ height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, color:PAL.inkSoft }}>
             <Icon name="map" size={40} color={PAL.line}/>
             <div style={{ fontSize:13 }}>Sin destino definido</div>
           </div>
-        )}
+          )}
+        </div>
       </div>
 
       <TabBar active="map" onTab={k => {

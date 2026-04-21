@@ -1391,12 +1391,15 @@ const Screen6_Posted = ({ navigate = () => {} }) => (
 // ═════════════════════════════════════════════════════════════
 // SCREEN 7 — Perfil de usuario
 // ═════════════════════════════════════════════════════════════
-const Screen7_Profile = ({ navigate = () => {}, currentUser = null, currentTrip = null }) => {
+const Screen7_Profile = ({ navigate = () => {}, currentUser = null, currentTrip = null, onLeaveTrip = () => {} }) => {
   const displayName = currentUser?.displayName || 'Viajero';
   const photoURL    = currentUser?.photoURL    || null;
   const initial     = displayName.charAt(0).toUpperCase();
-  const [notifs, setNotifs]           = React.useState(true);
+  const [notifs, setNotifs]               = React.useState(true);
   const [activityCount, setActivityCount] = React.useState(null);
+  const [confirmLeave, setConfirmLeave]   = React.useState(false);
+  const [leaving, setLeaving]             = React.useState(false);
+  const [leaveError, setLeaveError]       = React.useState(null);
 
   React.useEffect(() => {
     if (!currentTrip?.id) return;
@@ -1407,6 +1410,23 @@ const Screen7_Profile = ({ navigate = () => {}, currentUser = null, currentTrip 
 
   const memberCount = Object.keys(currentTrip?.members || {}).length;
   const tripDates   = [currentTrip?.startDate, currentTrip?.endDate].filter(Boolean).join(' — ');
+  const isAdmin     = currentTrip?.members?.[currentUser?.uid]?.role === 'admin';
+
+  const handleLeave = async () => {
+    setLeaving(true);
+    setLeaveError(null);
+    try {
+      if (memberCount <= 1) {
+        await deleteTrip(currentTrip.id);
+      } else {
+        await removeTripMember(currentTrip.id, currentUser.uid);
+      }
+      onLeaveTrip();
+    } catch(e) {
+      setLeaveError('No se pudo salir del viaje. Intentá de nuevo.');
+      setLeaving(false);
+    }
+  };
 
   const Toggle = ({ on, onToggle }) => (
     <div onClick={onToggle} style={{ width: 44, height: 26, borderRadius: 100, background: on ? PAL.blue : PAL.line, position: 'relative', cursor: 'pointer', flexShrink: 0, transition: 'background 0.2s' }}>
@@ -1486,6 +1506,46 @@ const Screen7_Profile = ({ navigate = () => {}, currentUser = null, currentTrip 
               </div>
             </Tap>
           </div>
+        </div>
+
+        {/* Salir del viaje */}
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 10 }}>Viaje</div>
+          {isAdmin && memberCount > 1 ? (
+            <div style={{ background: PAL.white, borderRadius: 16, border: `1px solid ${PAL.line}`, padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: '#FBE5E5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon name="users" size={17} color={PAL.red}/>
+              </div>
+              <span style={{ flex: 1, fontSize: 13, color: PAL.inkSoft, lineHeight: 1.4 }}>Sos el admin. Pedile a otro miembro que asuma el rol antes de salir.</span>
+            </div>
+          ) : confirmLeave ? (
+            <div style={{ background: PAL.white, borderRadius: 16, border: `1.5px solid ${PAL.red}`, padding: '14px 16px' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: PAL.ink, marginBottom: 4 }}>
+                {memberCount <= 1 ? '¿Eliminar el viaje?' : '¿Salir del viaje?'}
+              </div>
+              <div style={{ fontSize: 12, color: PAL.inkSoft, marginBottom: 12, lineHeight: 1.4 }}>
+                {memberCount <= 1 ? 'Sos el único miembro. El viaje se eliminará.' : 'Ya no vas a poder ver ni editar este viaje.'}
+              </div>
+              {leaveError && <div style={{ fontSize: 12, color: PAL.red, marginBottom: 10, fontWeight: 600 }}>{leaveError}</div>}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div onClick={leaving ? undefined : handleLeave} style={{ flex: 1, background: PAL.red, color: '#fff', borderRadius: 10, padding: '10px', textAlign: 'center', fontWeight: 700, fontSize: 13, cursor: leaving ? 'default' : 'pointer', opacity: leaving ? 0.6 : 1 }}>
+                  {leaving ? 'Saliendo…' : memberCount <= 1 ? 'Eliminar' : 'Salir'}
+                </div>
+                <div onClick={() => { setConfirmLeave(false); setLeaveError(null); }} style={{ flex: 1, background: PAL.bg, border: `1px solid ${PAL.line}`, borderRadius: 10, padding: '10px', textAlign: 'center', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                  Cancelar
+                </div>
+              </div>
+            </div>
+          ) : (
+            <Tap>
+              <div onClick={() => setConfirmLeave(true)} style={{ background: PAL.white, borderRadius: 16, border: `1px solid ${PAL.line}`, padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: '#FBE5E5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon name="back" size={17} color={PAL.red}/>
+                </div>
+                <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: PAL.red }}>Salir del viaje</span>
+              </div>
+            </Tap>
+          )}
         </div>
 
       </div>

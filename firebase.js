@@ -110,6 +110,10 @@ async function removeTripMember(tripId, memberId) {
   });
 }
 
+async function deleteTrip(tripId) {
+  await FB_DB.collection('trips').doc(tripId).delete();
+}
+
 // ── Activities ───────────────────────────────────────────────
 
 async function getActivities(tripId) {
@@ -137,6 +141,6 @@ async function toggleVote(tripId, actId, uid, hasVoted) {
 Object.assign(window, {
   FB_AUTH, FB_DB,
   signInWithGoogle, fbSignOut,
-  createTrip, joinTrip, getUserTrip, getTrip, removeTripMember,
+  createTrip, joinTrip, getUserTrip, getTrip, removeTripMember, deleteTrip,
   getActivities, addActivity, removeActivity, toggleVote,
 });

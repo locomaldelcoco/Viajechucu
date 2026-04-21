@@ -626,6 +626,15 @@ const ScreenNewTrip = ({ currentUser, onTripReady }) => {
 const Screen1_Trips = ({ navigate = () => {}, currentUser = null, currentTrip = null }) => {
   const firstName   = currentUser?.displayName?.split(' ')[0] || 'viajero';
   const userPhoto   = currentUser?.photoURL || currentUser?.providerData?.[0]?.photoURL || null;
+  const [activityCount, setActivityCount] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!currentTrip?.id) return;
+    getActivities(currentTrip.id)
+      .then(acts => setActivityCount(acts.length))
+      .catch(() => setActivityCount(0));
+  }, [currentTrip?.id]);
+
   const tripName    = currentTrip?.name        || 'Mi viaje';
   const tripDest    = currentTrip?.destination || '';
   const tripDates   = [currentTrip?.startDate, currentTrip?.endDate].filter(Boolean).join(' al ');
@@ -693,7 +702,7 @@ const Screen1_Trips = ({ navigate = () => {}, currentUser = null, currentTrip = 
             <div style={{ fontSize: 11, color: PAL.inkSoft }}>{memberNames || 'Solo vos por ahora'}</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: PAL.blueDeep, letterSpacing: -0.3 }}>9</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: PAL.blueDeep, letterSpacing: -0.3 }}>{activityCount === null ? '—' : activityCount}</div>
             <div style={{ fontSize: 10, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.5 }}>actividades</div>
           </div>
         </div>
@@ -947,7 +956,7 @@ const Screen2_Plan = ({ navigate = () => {}, currentTrip = null, currentUser = n
 // ═════════════════════════════════════════════════════════════
 // SCREEN 3 — New activity bottom sheet (type pick + WHEN)
 // ═════════════════════════════════════════════════════════════
-const Screen3_TypePick = ({ navigate = () => {} }) => {
+const Screen3_TypePick = ({ navigate = () => {}, currentTrip = null }) => {
   const [selected, setSelected] = React.useState('hike');
   const types = [
     { k: 'food', label: 'Comida', icon: 'food', color: PAL.orange },
@@ -1013,12 +1022,14 @@ const Screen3_TypePick = ({ navigate = () => {} }) => {
           })}
         </div>
 
-        <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', background: PAL.blueSoft, borderRadius: 14 }}>
-          <Icon name="sparkle" size={18} color={PAL.blue}/>
-          <span style={{ fontSize: 12, color: PAL.blueInk, flex: 1 }}>
-            <b style={{ color: PAL.blue }}>Tomás</b> ya propuso 2 excursiones para Bariloche.
-          </span>
-        </div>
+        {currentTrip?.destination && (
+          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', background: PAL.blueSoft, borderRadius: 14 }}>
+            <Icon name="sparkle" size={18} color={PAL.blue}/>
+            <span style={{ fontSize: 12, color: PAL.blueInk, flex: 1 }}>
+              Estás planificando <b style={{ color: PAL.blue }}>{currentTrip.destination}</b>. ¡Sumá lo que más te gusta!
+            </span>
+          </div>
+        )}
       </div>
     </Phone>
   );
@@ -1357,49 +1368,22 @@ const Screen6_Posted = ({ navigate = () => {} }) => (
 // ═════════════════════════════════════════════════════════════
 // SCREEN 7 — Perfil de usuario
 // ═════════════════════════════════════════════════════════════
-const Screen7_Profile = ({ navigate = () => {}, currentUser = null }) => {
-  const displayName = currentUser?.displayName || GROUP[0].name;
+const Screen7_Profile = ({ navigate = () => {}, currentUser = null, currentTrip = null }) => {
+  const displayName = currentUser?.displayName || 'Viajero';
   const photoURL    = currentUser?.photoURL    || null;
   const initial     = displayName.charAt(0).toUpperCase();
-  const ME = { ...GROUP[0], name: displayName, initial };
-  const [notifs, setNotifs] = React.useState(true);
-  const [darkMode, setDarkMode] = React.useState(false);
-  const [socials, setSocials] = React.useState({
-    instagram: { connected: true,  handle: '@luna.viajes' },
-    x:         { connected: false, handle: '@luna' },
-    tiktok:    { connected: true,  handle: '@lunavlogs' },
-  });
-  const toggleSocial = k => setSocials(s => ({ ...s, [k]: { ...s[k], connected: !s[k].connected } }));
+  const [notifs, setNotifs]           = React.useState(true);
+  const [activityCount, setActivityCount] = React.useState(null);
 
-  const IgIcon = ({ color }) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="2" width="20" height="20" rx="5"/>
-      <circle cx="12" cy="12" r="4"/>
-      <circle cx="17.5" cy="6.5" r="1.2" fill={color} stroke="none"/>
-    </svg>
-  );
-  const XIcon = ({ color }) => (
-    <svg width="19" height="19" viewBox="0 0 24 24" fill={color}>
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-    </svg>
-  );
-  const TikTokIcon = ({ color }) => (
-    <svg width="19" height="19" viewBox="0 0 24 24" fill={color}>
-      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.2 8.2 0 004.79 1.53V6.74a4.85 4.85 0 01-1.02-.05z"/>
-    </svg>
-  );
+  React.useEffect(() => {
+    if (!currentTrip?.id) return;
+    getActivities(currentTrip.id)
+      .then(acts => setActivityCount(acts.length))
+      .catch(() => setActivityCount(0));
+  }, [currentTrip?.id]);
 
-  const NETS = [
-    { key: 'instagram', label: 'Instagram', brand: '#E1306C', bgOn: '#FDE8F0', Icon: IgIcon },
-    { key: 'x',         label: 'X',         brand: '#000000', bgOn: '#E8E8E8', Icon: XIcon },
-    { key: 'tiktok',    label: 'TikTok',    brand: '#FF0050', bgOn: '#FFE0EA', Icon: TikTokIcon },
-  ];
-
-  const trips = [
-    { name: 'Patagonia · verano',    dates: '14-25 feb 2026', people: 4, activities: 9,  active: true  },
-    { name: 'Córdoba · semana santa', dates: 'abr 2025',       people: 3, activities: 5,  active: false },
-    { name: 'Mendoza · vendimia',     dates: 'mar 2025',       people: 6, activities: 7,  active: false },
-  ];
+  const memberCount = Object.keys(currentTrip?.members || {}).length;
+  const tripDates   = [currentTrip?.startDate, currentTrip?.endDate].filter(Boolean).join(' — ');
 
   const Toggle = ({ on, onToggle }) => (
     <div onClick={onToggle} style={{ width: 44, height: 26, borderRadius: 100, background: on ? PAL.blue : PAL.line, position: 'relative', cursor: 'pointer', flexShrink: 0, transition: 'background 0.2s' }}>
@@ -1417,31 +1401,20 @@ const Screen7_Profile = ({ navigate = () => {}, currentUser = null }) => {
         </div>
         <div style={{ position: 'absolute', bottom: -43, left: 22 }}>
           {photoURL ? (
-            <img src={photoURL} alt={displayName} style={{ width: 86, height: 86, borderRadius: '50%', border: '4px solid #FAF8F4', objectFit: 'cover', boxShadow: '0 6px 18px rgba(0,0,0,0.18)' }}/>
+            <img src={photoURL} referrerPolicy="no-referrer" alt={displayName} style={{ width: 86, height: 86, borderRadius: '50%', border: '4px solid #FAF8F4', objectFit: 'cover', boxShadow: '0 6px 18px rgba(0,0,0,0.18)' }}/>
           ) : (
-            <div style={{ width: 86, height: 86, borderRadius: '50%', background: ME.color, border: '4px solid #FAF8F4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 800, color: '#fff', boxShadow: '0 6px 18px rgba(0,0,0,0.18)' }}>
-              {ME.initial}
+            <div style={{ width: 86, height: 86, borderRadius: '50%', background: PAL.orange, border: '4px solid #FAF8F4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 800, color: '#fff', boxShadow: '0 6px 18px rgba(0,0,0,0.18)' }}>
+              {initial}
             </div>
           )}
-        </div>
-        {/* Iconos redes — derecha, debajo de portada */}
-        <div style={{ position: 'absolute', bottom: -22, right: 20, display: 'flex', gap: 10 }}>
-          {NETS.map(net => {
-            const s = socials[net.key];
-            return (
-              <div key={net.key} onClick={() => toggleSocial(net.key)} style={{ width: 38, height: 38, borderRadius: '50%', background: s.connected ? net.bgOn : '#F2F2F2', border: `2px solid ${s.connected ? net.brand : '#D8D8D8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: s.connected ? `0 2px 8px ${net.brand}40` : 'none', transition: 'all 0.2s' }}>
-                <net.Icon color={s.connected ? net.brand : '#BBBBBB'}/>
-              </div>
-            );
-          })}
         </div>
       </div>
 
       {/* Nombre */}
       <div style={{ padding: '0 24px 0', flexShrink: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>{ME.name}</div>
-          <div style={{ fontSize: 13, color: PAL.inkSoft, marginTop: 2 }}>{currentUser?.email || '@luna · Buenos Aires'}</div>
+          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>{displayName}</div>
+          <div style={{ fontSize: 13, color: PAL.inkSoft, marginTop: 2 }}>{currentUser?.email || ''}</div>
         </div>
         <Tap>
           <div onClick={() => fbSignOut()} style={{ marginTop: 4, padding: '6px 12px', borderRadius: 10, background: PAL.bg, border: `1px solid ${PAL.line}`, fontSize: 12, fontWeight: 700, color: PAL.inkSoft, cursor: 'pointer' }}>
@@ -1451,26 +1424,24 @@ const Screen7_Profile = ({ navigate = () => {}, currentUser = null }) => {
       </div>
 
       {/* Contenido */}
-      <div style={{ flex: 1, overflow: 'hidden', padding: '18px 20px 8px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px 8px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-        {/* Mis viajes */}
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 10 }}>Mis viajes</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {trips.map((t, i) => (
-              <Shake key={i}>
-                <div style={{ background: PAL.white, borderRadius: 14, padding: '11px 14px', border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: t.active ? PAL.green : PAL.line, flexShrink: 0 }}/>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>{t.name}</div>
-                    <div style={{ fontSize: 11, color: PAL.inkSoft, marginTop: 1 }}>{t.dates} · {t.people} viajeros · {t.activities} actividades</div>
-                  </div>
-                  <Icon name="chevR" size={16} color={PAL.inkSoft}/>
+        {/* Viaje activo */}
+        {currentTrip && (
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 10 }}>Viaje activo</div>
+            <div style={{ background: PAL.white, borderRadius: 14, padding: '11px 14px', border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: PAL.green, flexShrink: 0 }}/>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>{currentTrip.name}</div>
+                <div style={{ fontSize: 11, color: PAL.inkSoft, marginTop: 1 }}>
+                  {[tripDates, `${memberCount} viajero${memberCount !== 1 ? 's' : ''}`, activityCount !== null ? `${activityCount} actividades` : null].filter(Boolean).join(' · ')}
                 </div>
-              </Shake>
-            ))}
+              </div>
+              <Icon name="chevR" size={16} color={PAL.inkSoft}/>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Ajustes */}
         <div>
@@ -1483,21 +1454,14 @@ const Screen7_Profile = ({ navigate = () => {}, currentUser = null }) => {
               <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>Notificaciones</span>
               <Toggle on={notifs} onToggle={() => setNotifs(v => !v)}/>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: `1px solid ${PAL.line}` }}>
-              <div style={{ width: 34, height: 34, borderRadius: 10, background: PAL.yellowSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Icon name="sun" size={17} color={PAL.yellow}/>
-              </div>
-              <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>Modo oscuro</span>
-              <Toggle on={darkMode} onToggle={() => setDarkMode(v => !v)}/>
-            </div>
-            <Shake>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px' }}>
+            <Tap>
+              <div onClick={() => fbSignOut()} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', cursor: 'pointer' }}>
                 <div style={{ width: 34, height: 34, borderRadius: 10, background: '#FBE5E5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Icon name="cross" size={17} color={PAL.red}/>
                 </div>
                 <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: PAL.red }}>Cerrar sesión</span>
               </div>
-            </Shake>
+            </Tap>
           </div>
         </div>
 

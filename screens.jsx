@@ -1508,6 +1508,37 @@ const Screen7_Profile = ({ navigate = () => {}, currentUser = null, currentTrip 
           </div>
         </div>
 
+        {/* Feedback */}
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 10 }}>Comunidad</div>
+          <div style={{ background: PAL.white, borderRadius: 16, border: `1px solid ${PAL.line}`, overflow: 'hidden' }}>
+            <Tap>
+              <div onClick={() => window.open('https://github.com/locomaldelcoco/Viajechucu/issues/new?labels=bug&title=[Bug]%20', '_blank')} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: `1px solid ${PAL.line}`, cursor: 'pointer' }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: '#FBE5E5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon name="cross" size={17} color={PAL.red}/>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>Reportar un problema</div>
+                  <div style={{ fontSize: 11, color: PAL.inkSoft, marginTop: 1 }}>Abre un issue en GitHub</div>
+                </div>
+                <Icon name="chevR" size={15} color={PAL.inkSoft}/>
+              </div>
+            </Tap>
+            <Tap>
+              <div onClick={() => window.open('https://github.com/locomaldelcoco/Viajechucu/issues/new?labels=enhancement&title=[Sugerencia]%20', '_blank')} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', cursor: 'pointer' }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: PAL.blueSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon name="plus" size={17} color={PAL.blue}/>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>Sugerir una mejora</div>
+                  <div style={{ fontSize: 11, color: PAL.inkSoft, marginTop: 1 }}>Tu idea puede ser la próxima feature</div>
+                </div>
+                <Icon name="chevR" size={15} color={PAL.inkSoft}/>
+              </div>
+            </Tap>
+          </div>
+        </div>
+
         {/* Salir del viaje */}
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, color: PAL.inkSoft, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 10 }}>Viaje</div>

@@ -1202,13 +1202,28 @@ const Screen4_Form = ({ navigate = () => {}, currentTrip = null, currentUser = n
         {/* Time */}
         <div>
           <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:6 }}>Horario</div>
-          <input value={time} onChange={e => setTime(e.target.value)} placeholder="Ej: 10:00 (opcional)" style={inp}/>
+          <input
+            type="time"
+            value={time}
+            onChange={e => setTime(e.target.value)}
+            style={inp}
+          />
         </div>
 
         {/* Cost */}
         <div>
           <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.5, marginBottom:6 }}>Costo estimado</div>
-          <input value={cost} onChange={e => setCost(e.target.value)} placeholder="Ej: $ 18.000 (opcional)" style={inp}/>
+          <input
+            value={cost}
+            inputMode="numeric"
+            placeholder="Opcional"
+            onChange={e => {
+              const digits = e.target.value.replace(/\D/g, '');
+              if (!digits) { setCost(''); return; }
+              setCost('$ ' + parseInt(digits, 10).toLocaleString('es-AR'));
+            }}
+            style={inp}
+          />
         </div>
 
         {/* Notes */}

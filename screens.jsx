@@ -637,7 +637,18 @@ const Screen1_Trips = ({ navigate = () => {}, currentUser = null, currentTrip = 
 
   const tripName    = currentTrip?.name        || 'Mi viaje';
   const tripDest    = currentTrip?.destination || '';
-  const tripDates   = [currentTrip?.startDate, currentTrip?.endDate].filter(Boolean).join(' al ');
+
+  function formatTripDates(start, end) {
+    if (!start) return '';
+    if (!end)   return start;
+    const ps = start.toLowerCase().split(' ');
+    const pe = end.toLowerCase().split(' ');
+    if (ps[2] === pe[2] && ps[1] === pe[1]) return `${ps[0]} al ${pe[0]} ${pe[1]} ${pe[2]}`;
+    if (ps[2] === pe[2])                    return `${ps[0]} ${ps[1]} al ${pe[0]} ${pe[1]} ${pe[2]}`;
+    return `${start} al ${end}`;
+  }
+
+  const tripDates   = formatTripDates(currentTrip?.startDate, currentTrip?.endDate);
   const memberCount = Object.keys(currentTrip?.members || {}).length;
   const memberNames = Object.values(currentTrip?.members || {})
     .filter(m => m.name !== currentUser?.displayName)
@@ -677,7 +688,7 @@ const Screen1_Trips = ({ navigate = () => {}, currentUser = null, currentTrip = 
     {/* Active trip card */}
     <div style={{ padding: '0 20px', marginTop: -52 }}>
       <div style={{
-        background: PAL.white, borderRadius: 22, padding: 18,
+        background: PAL.white, borderRadius: 22, padding: '22px 18px 18px',
         boxShadow: '0 16px 30px -12px rgba(11,42,89,0.22)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

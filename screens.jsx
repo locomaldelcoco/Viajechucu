@@ -180,19 +180,13 @@ const AvatarStack = ({ people, size = 28, max = 4, bg = '#fff' }) => {
 };
 
 // ─── Status bar / nav ────────────────────────────────────────
-const StatusBar = ({ dark = false }) => (
-  <div style={{ height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative' }}>
-    <div style={{ width: 22, height: 22, borderRadius: 100, background: dark ? '#000' : '#1d1d1d' }}/>
-  </div>
-);
-
 const NavPill = ({ dark = false }) => (
   <div style={{ height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
     <div style={{ width: 108, height: 4, borderRadius: 2, background: dark ? '#fff' : PAL.ink, opacity: 0.6 }}/>
   </div>
 );
 
-const Phone = ({ children, bg = PAL.bg, statusTint, statusDark = false, navDark = false }) => (
+const Phone = ({ children, bg = PAL.bg, navDark = false }) => (
   <div style={{
     width: 390, height: 800, borderRadius: 40, overflow: 'hidden',
     background: bg, border: `9px solid #1b2030`,
@@ -200,7 +194,6 @@ const Phone = ({ children, bg = PAL.bg, statusTint, statusDark = false, navDark 
     display: 'flex', flexDirection: 'column', boxSizing: 'border-box',
     fontFamily: FONT, color: PAL.ink, position: 'relative',
   }}>
-    <StatusBar dark={statusDark} tint={statusTint}/>
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
       {children}
     </div>
@@ -1841,8 +1834,6 @@ const ScreenMap = ({ navigate = () => {}, currentTrip = null }) => {
 
   return (
     <Phone bg={PAL.bg}>
-      <StatusBar />
-
       {/* Header */}
       <div style={{ padding:'0 20px 12px', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
         <div style={{ flex:1 }}>

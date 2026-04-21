@@ -274,7 +274,8 @@ const Screen0_Login = () => {
           <img src="https://github.com/locomaldelcoco.png" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}/>
         </div>
         <div style={{ fontSize: 34, fontWeight: 800, color: '#fff', letterSpacing: -0.8, lineHeight: 1.1 }}>Viajechucu</div>
-        <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)', marginTop: 8, fontWeight: 500 }}>Planificá viajes en grupo,<br/>sin el caos.</div>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, fontWeight: 500, letterSpacing: 0.2 }}>@locomaldelcoco</div>
+        <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)', marginTop: 10, fontWeight: 500 }}>Planificá viajes en grupo,<br/>sin el caos.</div>
       </div>
 
       {/* Features */}

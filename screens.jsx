@@ -241,6 +241,53 @@ const TabBar = ({ active = 'plan', onTab = () => {} }) => {
 
 // ═════════════════════════════════════════════════════════════
 // SCREEN 0 — Login
+// ─── InstallBanner ────────────────────────────────────────────
+const InstallBanner = ({ style = {} }) => {
+  const [prompt, setPrompt]       = React.useState(window._installPrompt || null);
+  const [dismissed, setDismissed] = React.useState(false);
+
+  React.useEffect(() => {
+    const handler = e => { e.preventDefault(); window._installPrompt = e; setPrompt(e); };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const isIos        = /iP(ad|hone|od)/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.navigator.standalone ||
+                       window.matchMedia('(display-mode: standalone)').matches;
+
+  if (isStandalone || dismissed) return null;
+  if (!isIos && !prompt) return null;
+
+  const handleInstall = async () => {
+    if (!prompt) return;
+    prompt.prompt();
+    const { outcome } = await prompt.userChoice;
+    if (outcome === 'accepted') { window._installPrompt = null; setPrompt(null); }
+  };
+
+  return (
+    <div style={{ background: PAL.blueSoft, borderRadius: 14, padding: '12px 14px', border: `1px solid ${PAL.line}`, display: 'flex', alignItems: 'center', gap: 10, ...style }}>
+      <div style={{ width: 36, height: 36, borderRadius: 10, background: PAL.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon name="plus" size={18} color="#fff"/>
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 700 }}>Instalá la app</div>
+        <div style={{ fontSize: 11, color: PAL.inkSoft, marginTop: 1 }}>
+          {isIos ? 'Tocá Compartir ⬆ → "Añadir a pantalla de inicio"' : 'Acceso rápido desde tu pantalla de inicio'}
+        </div>
+      </div>
+      {isIos ? (
+        <div onClick={() => setDismissed(true)} style={{ fontSize: 16, color: PAL.inkSoft, cursor: 'pointer', padding: '4px 6px', flexShrink: 0 }}>✕</div>
+      ) : (
+        <div onClick={handleInstall} style={{ background: PAL.blue, color: '#fff', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+          Instalar
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ═════════════════════════════════════════════════════════════
 const Screen0_Login = () => {
   const [loading, setLoading] = React.useState(false);
@@ -289,6 +336,7 @@ const Screen0_Login = () => {
 
       {/* Login button */}
       <div style={{ padding: '0 24px 32px', display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>
+        <InstallBanner />
         {error && <div style={{ fontSize: 12, color: PAL.red, textAlign: 'center', fontWeight: 600 }}>{error}</div>}
         <div onClick={loading ? undefined : handleGoogle} style={{
           background: loading ? PAL.bg : PAL.white,
@@ -733,6 +781,8 @@ const Screen1_Trips = ({ navigate = () => {}, currentUser = null, currentTrip = 
         </div>
       </div>
     </div>
+
+    <InstallBanner style={{ margin: '12px 20px 0' }} />
 
     {/* Recent activity in the group */}
     <div style={{ padding: '24px 24px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>

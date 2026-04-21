@@ -221,6 +221,7 @@ const TabBar = ({ active = 'plan', onTab = () => {} }) => {
       display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around',
       padding: '10px 14px 14px', background: PAL.white,
       borderTop: `1px solid ${PAL.line}`, flexShrink: 0,
+      position: 'relative', zIndex: 10,
     }}>
       {tabs.map(t => {
         const isA = t.k === active;
@@ -627,12 +628,20 @@ const Screen1_Trips = ({ navigate = () => {}, currentUser = null, currentTrip = 
   const firstName   = currentUser?.displayName?.split(' ')[0] || 'viajero';
   const userPhoto   = currentUser?.photoURL || currentUser?.providerData?.[0]?.photoURL || null;
   const [activityCount, setActivityCount] = React.useState(null);
+  const [recentActs, setRecentActs]       = React.useState(null);
 
   React.useEffect(() => {
     if (!currentTrip?.id) return;
     getActivities(currentTrip.id)
-      .then(acts => setActivityCount(acts.length))
-      .catch(() => setActivityCount(0));
+      .then(acts => {
+        setActivityCount(acts.length);
+        const sorted = acts
+          .filter(a => a.createdAt)
+          .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())
+          .slice(0, 3);
+        setRecentActs(sorted);
+      })
+      .catch(() => { setActivityCount(0); setRecentActs([]); });
   }, [currentTrip?.id]);
 
   const tripName    = currentTrip?.name        || 'Mi viaje';
@@ -726,30 +735,33 @@ const Screen1_Trips = ({ navigate = () => {}, currentUser = null, currentTrip = 
     {/* Recent activity in the group */}
     <div style={{ padding: '24px 24px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
       <div style={{ fontSize: 16, fontWeight: 700 }}>Movimientos del grupo</div>
-      <Shake><div style={{ fontSize: 12, color: PAL.blueDeep, fontWeight: 600 }}>Ver todo</div></Shake>
+      <div onClick={() => navigate('plan')} style={{ fontSize: 12, color: PAL.blueDeep, fontWeight: 600, cursor: 'pointer' }}>Ver plan</div>
     </div>
     <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1, overflow: 'hidden' }}>
-      {[
-        { who: GROUP[1], action: 'propuso', what: 'Cerro Catedral · trekking', when: 'hace 2 h', icon: 'plus', tone: PAL.green },
-        { who: GROUP[2], action: 'modificó la hora de', what: 'Asado en El Bolsón', when: 'hace 5 h', icon: 'edit', tone: PAL.yellow },
-        { who: GROUP[3], action: 'eliminó', what: 'Visita museo (día 3)', when: 'ayer', icon: 'trash', tone: PAL.red },
-      ].map((m, i) => (
-        <div key={i} style={{
+      {recentActs === null ? (
+        <div style={{ fontSize: 13, color: PAL.inkSoft, textAlign: 'center', paddingTop: 16 }}>Cargando…</div>
+      ) : recentActs.length === 0 ? (
+        <div style={{ background: PAL.white, borderRadius: 14, padding: '18px 16px', textAlign: 'center', border: `1px solid ${PAL.line}` }}>
+          <div style={{ fontSize: 13, color: PAL.inkSoft }}>Todavía no hay propuestas.</div>
+          <div style={{ fontSize: 12, color: PAL.blueDeep, fontWeight: 600, marginTop: 6, cursor: 'pointer' }} onClick={() => navigate('type-pick')}>¡Sé el primero en proponer algo!</div>
+        </div>
+      ) : recentActs.map(act => (
+        <div key={act.id} style={{
           background: PAL.white, borderRadius: 14, padding: '10px 12px',
           display: 'flex', alignItems: 'center', gap: 10, border: `1px solid ${PAL.line}`,
         }}>
-          <Avatar p={m.who} size={32}/>
+          <Avatar p={{ photoURL: act.proposer?.photoURL, initial: (act.proposer?.name || '?').charAt(0).toUpperCase(), color: PAL.blue }} size={32}/>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, lineHeight: 1.35 }}>
-              <b>{m.who.name}</b> <span style={{ color: PAL.inkSoft }}>{m.action}</span> <b>{m.what}</b>
+              <b>{act.proposer?.name || 'Alguien'}</b> <span style={{ color: PAL.inkSoft }}>propuso</span> <b>{act.title}</b>
             </div>
-            <div style={{ fontSize: 11, color: PAL.inkSoft, marginTop: 1 }}>{m.when}</div>
+            <div style={{ fontSize: 11, color: PAL.inkSoft, marginTop: 1 }}>{relTime(act.createdAt)}</div>
           </div>
           <div style={{
-            width: 28, height: 28, borderRadius: 8, background: m.tone + '22',
+            width: 28, height: 28, borderRadius: 8, background: (act.color || PAL.green) + '22',
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            <Icon name={m.icon} size={15} color={m.tone} stroke={2.2}/>
+            <Icon name={act.icon || 'plus'} size={15} color={act.color || PAL.green} stroke={2.2}/>
           </div>
         </div>
       ))}
@@ -793,6 +805,15 @@ function getTripDays(startDate, endDate) {
 }
 function dayLabel(iso) { const [y,m,d]=iso.split('-').map(Number); return _DAY_NAMES[new Date(y,m-1,d).getDay()]; }
 function dayNum(iso)   { return parseInt(iso.split('-')[2]); }
+function relTime(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts.toMillis();
+  const h = Math.floor(diff / 3600000);
+  if (h < 1) return 'hace un momento';
+  if (h < 24) return `hace ${h} h`;
+  const d = Math.floor(h / 24);
+  return d === 1 ? 'ayer' : `hace ${d} días`;
+}
 
 const Screen2_Plan = ({ navigate = () => {}, currentTrip = null, currentUser = null }) => {
   const tripDays = getTripDays(currentTrip?.startDate, currentTrip?.endDate);

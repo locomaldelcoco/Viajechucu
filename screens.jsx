@@ -270,11 +270,8 @@ const Screen0_Login = () => {
       <div style={{ background: PAL.blue, padding: '60px 32px 80px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
         <div style={{ position: 'absolute', right: -60, top: -60, width: 220, height: 220, borderRadius: '50%', background: PAL.orange, opacity: 0.18 }}/>
         <div style={{ position: 'absolute', left: -40, bottom: -40, width: 160, height: 160, borderRadius: '50%', background: '#fff', opacity: 0.06 }}/>
-        <div style={{ width: 72, height: 72, borderRadius: 22, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}>
-          <svg width="44" height="44" viewBox="0 0 512 512">
-            <path d="M380 160 160 260l40 30-20 62 42-28 32 24 126-188z" fill={PAL.orange}/>
-            <path d="M200 290l-40-30 180-100-140 130z" fill={PAL.blue} opacity="0.5"/>
-          </svg>
+        <div style={{ width: 72, height: 72, borderRadius: 22, overflow: 'hidden', marginBottom: 24, boxShadow: '0 8px 24px rgba(0,0,0,0.18)', flexShrink: 0 }}>
+          <img src="https://github.com/locomaldelcoco.png" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}/>
         </div>
         <div style={{ fontSize: 34, fontWeight: 800, color: '#fff', letterSpacing: -0.8, lineHeight: 1.1 }}>Viajechucu</div>
         <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)', marginTop: 8, fontWeight: 500 }}>Planificá viajes en grupo,<br/>sin el caos.</div>

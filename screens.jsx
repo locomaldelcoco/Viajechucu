@@ -1835,7 +1835,7 @@ const ScreenMap = ({ navigate = () => {}, currentTrip = null }) => {
   return (
     <Phone bg={PAL.bg}>
       {/* Header */}
-      <div style={{ padding:'0 20px 12px', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
+      <div style={{ padding:'20px 20px 12px', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
         <div style={{ flex:1 }}>
           <div style={{ fontSize:20, fontWeight:800, letterSpacing:-0.5 }}>Mapa</div>
           {destination && (

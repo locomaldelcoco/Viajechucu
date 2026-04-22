@@ -867,12 +867,15 @@ function relTime(ts) {
   return d === 1 ? 'ayer' : `hace ${d} días`;
 }
 
-const Screen2_Plan = ({ navigate = () => {}, currentTrip = null, currentUser = null }) => {
+const Screen2_Plan = ({ navigate = () => {}, currentTrip = null, currentUser = null, onTripUpdate = () => {} }) => {
   const tripDays = getTripDays(currentTrip?.startDate, currentTrip?.endDate);
-  const [activeDay, setActiveDay] = React.useState(tripDays[0] || '');
+  const [activeDay, setActiveDay]   = React.useState(tripDays[0] || '');
   const [activities, setActivities] = React.useState([]);
   const [loading, setLoading]       = React.useState(true);
   const [deleting, setDeleting]     = React.useState(null);
+  const [editingDates, setEditingDates] = React.useState(false);
+  const [dateRange, setDateRange]   = React.useState({ startDate: currentTrip?.startDate || '', endDate: currentTrip?.endDate || '' });
+  const [savingDates, setSavingDates] = React.useState(false);
 
   const isAdmin = currentTrip?.members?.[currentUser?.uid]?.role === 'admin';
   const tripPeople = Object.values(currentTrip?.members || {}).map((m, i) => ({
@@ -912,6 +915,16 @@ const Screen2_Plan = ({ navigate = () => {}, currentTrip = null, currentUser = n
     catch(err) { console.error('Delete error:', err); }
   };
 
+  const handleSaveDates = async () => {
+    if (!dateRange.startDate || !dateRange.endDate) return;
+    setSavingDates(true);
+    try {
+      await updateTripDates(currentTrip.id, dateRange.startDate, dateRange.endDate);
+      onTripUpdate({ ...currentTrip, startDate: dateRange.startDate, endDate: dateRange.endDate });
+      setEditingDates(false);
+    } finally { setSavingDates(false); }
+  };
+
   return (
     <Phone bg={PAL.bg}>
       {/* Top bar */}
@@ -931,7 +944,12 @@ const Screen2_Plan = ({ navigate = () => {}, currentTrip = null, currentUser = n
       {/* Day strip */}
       <div style={{ padding:'4px 16px 12px', display:'flex', gap:8, overflowX:'auto' }}>
         {tripDays.length === 0
-          ? <div style={{ fontSize:13, color:PAL.inkSoft, padding:'10px 0' }}>El viaje no tiene fechas definidas.</div>
+          ? <div style={{ fontSize:13, color:PAL.inkSoft, padding:'10px 0', display:'flex', alignItems:'center', gap:10 }}>
+              <span>Sin fechas asignadas.</span>
+              {isAdmin && !editingDates && (
+                <span onClick={() => setEditingDates(true)} style={{ color:PAL.blue, fontWeight:700, cursor:'pointer', textDecoration:'underline' }}>Agregar fechas</span>
+              )}
+            </div>
           : tripDays.map(d => {
               const a = d === activeDay;
               return (
@@ -948,6 +966,27 @@ const Screen2_Plan = ({ navigate = () => {}, currentTrip = null, currentUser = n
             })
         }
       </div>
+
+      {/* Inline date editor */}
+      {editingDates && (
+        <div style={{ padding:'0 16px 12px', flexShrink:0 }}>
+          <DateRangePicker
+            startDate={dateRange.startDate}
+            endDate={dateRange.endDate}
+            onChange={dr => setDateRange(dr)}
+          />
+          <div style={{ display:'flex', gap:8, marginTop:10 }}>
+            <div onClick={savingDates || !dateRange.startDate || !dateRange.endDate ? undefined : handleSaveDates}
+              style={{ flex:1, background: (!dateRange.startDate || !dateRange.endDate || savingDates) ? PAL.line : PAL.blue, color:'#fff', borderRadius:12, padding:'12px', textAlign:'center', fontWeight:700, fontSize:14, cursor: (!dateRange.startDate || !dateRange.endDate || savingDates) ? 'default' : 'pointer' }}>
+              {savingDates ? 'Guardando…' : 'Guardar fechas'}
+            </div>
+            <div onClick={() => setEditingDates(false)}
+              style={{ flex:1, background:PAL.white, border:`1px solid ${PAL.line}`, borderRadius:12, padding:'12px', textAlign:'center', fontWeight:700, fontSize:14, cursor:'pointer' }}>
+              Cancelar
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Items */}
       <div style={{ flex:1, padding:'4px 16px 12px', overflowY:'auto', display:'flex', flexDirection:'column', gap:10 }}>

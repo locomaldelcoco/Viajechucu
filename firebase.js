@@ -103,6 +103,10 @@ async function getTrip(tripId) {
   return { id: doc.id, ...doc.data() };
 }
 
+async function updateTripDates(tripId, startDate, endDate) {
+  await FB_DB.collection('trips').doc(tripId).update({ startDate, endDate });
+}
+
 async function removeTripMember(tripId, memberId) {
   await FB_DB.collection('trips').doc(tripId).update({
     memberIds:             firebase.firestore.FieldValue.arrayRemove(memberId),
@@ -155,7 +159,7 @@ function subscribeToActivities(tripId, onChange) {
 Object.assign(window, {
   FB_AUTH, FB_DB,
   signInWithGoogle, fbSignOut,
-  createTrip, joinTrip, getUserTrip, getTrip, removeTripMember, deleteTrip,
+  createTrip, joinTrip, getUserTrip, getTrip, updateTripDates, removeTripMember, deleteTrip,
   getActivities, addActivity, removeActivity, toggleVote, updateRsvp,
   subscribeToActivities,
 });

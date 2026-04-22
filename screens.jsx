@@ -895,6 +895,8 @@ const Screen2_Plan = ({ navigate = () => {}, currentTrip = null, currentUser = n
     .filter(a => a.day === activeDay)
     .sort((a, b) => (a.time === '—' ? '99:99' : a.time || '00:00').localeCompare(b.time === '—' ? '99:99' : b.time || '00:00'));
 
+  const unassignedActivities = activities.filter(a => !a.day);
+
   const handleVote = async (act) => {
     if (!currentUser?.uid) return;
     const hasVoted = !!(act.votes || {})[currentUser.uid];
@@ -1050,6 +1052,45 @@ const Screen2_Plan = ({ navigate = () => {}, currentTrip = null, currentUser = n
             </div>
           );
         })}
+
+        {/* Actividades sin día asignado */}
+        {unassignedActivities.length > 0 && (
+          <div style={{ marginTop: dayActivities.length > 0 ? 16 : 0 }}>
+            <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, textTransform:'uppercase', letterSpacing:0.6, marginBottom:8 }}>Sin día asignado</div>
+            {unassignedActivities.map(e => {
+              const myVote    = !!(e.votes || {})[currentUser?.uid];
+              const voteCount = Object.keys(e.votes || {}).length;
+              const propObj   = { name: e.proposer?.name || '?', photoURL: e.proposer?.photoURL || null, initial: (e.proposer?.name || '?')[0].toUpperCase(), color: PAL.inkSoft };
+              return (
+                <div key={e.id} style={{ marginBottom:10 }}>
+                  <div onClick={() => navigate('activity-detail', { activity: e })}
+                    style={{ background:PAL.white, borderRadius:16, padding:12, border:`1.5px dashed ${PAL.line}`, display:'flex', gap:12, alignItems:'flex-start', cursor:'pointer', opacity:0.85 }}>
+                    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4, paddingTop:2 }}>
+                      <div style={{ fontSize:11, fontWeight:700, color:PAL.inkSoft, width:38, textAlign:'center' }}>—</div>
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
+                        <div style={{ width:22, height:22, borderRadius:6, background: e.color || PAL.blue, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                          <Icon name={e.icon || 'star'} size={12} color="#fff" stroke={2}/>
+                        </div>
+                        <span style={{ fontSize:14, fontWeight:700, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{e.title}</span>
+                      </div>
+                      {e.place && <div style={{ fontSize:12, color:PAL.inkSoft, marginBottom:4 }}>{e.place}</div>}
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <Avatar p={propObj} size={16}/>
+                        <span style={{ fontSize:11, color:PAL.inkSoft }}>{propObj.name}</span>
+                        <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:4 }}>
+                          <Icon name="heart" size={13} color={myVote ? PAL.red : PAL.inkSoft} stroke={myVote ? 2.5 : 1.8}/>
+                          <span style={{ fontSize:11, color:PAL.inkSoft }}>{voteCount}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Floating add */}

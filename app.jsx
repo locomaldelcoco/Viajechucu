@@ -39,6 +39,38 @@ const ViajeroApp = () => {
     setScreen('home');
   }, []);
 
+  // Pedir permiso de notificaciones cuando el usuario tiene un viaje activo
+  React.useEffect(() => {
+    if (!authUser || !currentTrip?.id) return;
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, [authUser?.uid, currentTrip?.id]);
+
+  // Escuchar nuevas actividades en tiempo real y notificar
+  React.useEffect(() => {
+    if (!currentTrip?.id || !authUser?.uid) return;
+    let initialized = false;
+    const unsub = subscribeToActivities(currentTrip.id, changes => {
+      if (!initialized) { initialized = true; return; }
+      changes
+        .filter(c => c.type === 'added')
+        .forEach(c => {
+          const act = c.doc.data();
+          if (act.proposer?.uid === authUser.uid) return; // no notificar al que propone
+          if (!('Notification' in window) || Notification.permission !== 'granted') return;
+          const title = `${act.proposer?.name || 'Alguien'} propuso una actividad`;
+          const opts  = { body: act.title, icon: '/icon-192.png', badge: '/icon-192.png' };
+          if (navigator.serviceWorker?.controller) {
+            navigator.serviceWorker.ready.then(reg => reg.showNotification(title, opts));
+          } else {
+            new Notification(title, opts);
+          }
+        });
+    });
+    return () => unsub();
+  }, [currentTrip?.id, authUser?.uid]);
+
   const loading = authUser === undefined || (authUser !== null && currentTrip === undefined);
 
   if (loading) return (

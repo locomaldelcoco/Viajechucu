@@ -147,9 +147,15 @@ async function updateRsvp(tripId, actId, uid, status) {
   });
 }
 
+function subscribeToActivities(tripId, onChange) {
+  return FB_DB.collection('trips').doc(tripId).collection('activities')
+    .onSnapshot(snap => onChange(snap.docChanges()));
+}
+
 Object.assign(window, {
   FB_AUTH, FB_DB,
   signInWithGoogle, fbSignOut,
   createTrip, joinTrip, getUserTrip, getTrip, removeTripMember, deleteTrip,
   getActivities, addActivity, removeActivity, toggleVote, updateRsvp,
+  subscribeToActivities,
 });

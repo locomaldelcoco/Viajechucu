@@ -1,8 +1,9 @@
-const CACHE = 'viajero-v14';
+const CACHE = 'mingo-v1';
 const SHELL = [
   '/index.html',
   '/manifest.json',
-  '/icon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
   '/app.jsx',
   '/screens.jsx',
   '/firebase.js',

@@ -1,4 +1,4 @@
-// firebase.js — inicialización Firebase (compat SDK cargado vía CDN)
+// firebase.js — Mingo
 const firebaseConfig = {
   apiKey: "AIzaSyBeSKdhxxCggk9f89VEzyj1ZuiEtcSlGnk",
   authDomain: "viajechucu.firebaseapp.com",
@@ -9,109 +9,66 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const FB_AUTH = firebase.auth();
 const FB_DB   = firebase.firestore();
 
 async function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
   const result   = await FB_AUTH.signInWithPopup(provider);
-  const user     = result.user;
-  const ref      = FB_DB.collection('users').doc(user.uid);
-  const snap     = await ref.get();
-  if (!snap.exists) {
-    await ref.set({
-      name:      user.displayName,
-      email:     user.email,
-      photoURL:  user.photoURL,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-  }
-  return user;
+  return result.user;
 }
 
-function fbSignOut() {
-  return FB_AUTH.signOut();
+function fbSignOut() { return FB_AUTH.signOut(); }
+
+// ── People ───────────────────────────────────────────────────
+
+function _peopleCol(uid) {
+  return FB_DB.collection('users').doc(uid).collection('people');
 }
 
-// ── Trips ────────────────────────────────────────────────────
-
-function generateInviteCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  return code;
+async function getPeople(uid) {
+  const snap = await _peopleCol(uid).get();
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-async function createTrip(data, user) {
-  const inviteCode = generateInviteCode();
-  const ref = FB_DB.collection('trips').doc();
-  await ref.set({
-    name:        data.name,
-    destination: data.destination || data.name,
-    startDate:   data.startDate   || '',
-    endDate:     data.endDate     || '',
-    createdBy:   user.uid,
-    createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
-    inviteCode,
-    memberIds: [user.uid],
-    members: {
-      [user.uid]: {
-        name:     user.displayName || 'Viajero',
-        photoURL: user.photoURL    || null,
-        role:     'admin',
-        joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      },
-    },
-  });
+async function addPerson(uid, data) {
+  const ref = _peopleCol(uid).doc();
+  await ref.set({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
   return ref.id;
 }
 
-async function joinTrip(code, user) {
-  const snap = await FB_DB.collection('trips')
-    .where('inviteCode', '==', code.toUpperCase().trim())
-    .limit(1)
-    .get();
-  if (snap.empty) throw new Error('Código inválido. Pedíselo a quien creó el viaje.');
-  const doc  = snap.docs[0];
-  const data = doc.data();
-  if (data.memberIds && data.memberIds.includes(user.uid)) return doc.id;
-  await doc.ref.update({
-    memberIds: firebase.firestore.FieldValue.arrayUnion(user.uid),
-    [`members.${user.uid}`]: {
-      name:     user.displayName || 'Viajero',
-      photoURL: user.photoURL    || null,
-      role:     'member',
-      joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
-    },
-  });
-  return doc.id;
+async function updatePerson(uid, personId, data) {
+  await _peopleCol(uid).doc(personId).update(data);
 }
 
-async function getUserTrip(uid) {
-  const snap = await FB_DB.collection('trips')
-    .where('memberIds', 'array-contains', uid)
-    .limit(1)
-    .get();
-  if (snap.empty) return null;
-  return { id: snap.docs[0].id, ...snap.docs[0].data() };
+async function deletePerson(uid, personId) {
+  await _peopleCol(uid).doc(personId).delete();
 }
 
-async function getTrip(tripId) {
-  const doc = await FB_DB.collection('trips').doc(tripId).get();
-  if (!doc.exists) return null;
-  return { id: doc.id, ...doc.data() };
+// ── Notes ────────────────────────────────────────────────────
+
+function _notesCol(uid, personId) {
+  return _peopleCol(uid).doc(personId).collection('notes');
 }
 
-async function removeTripMember(tripId, memberId) {
-  await FB_DB.collection('trips').doc(tripId).update({
-    memberIds:             firebase.firestore.FieldValue.arrayRemove(memberId),
-    [`members.${memberId}`]: firebase.firestore.FieldValue.delete(),
-  });
+async function getNotes(uid, personId) {
+  const snap = await _notesCol(uid, personId).get();
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+async function addNote(uid, personId, data) {
+  const ref = _notesCol(uid, personId).doc();
+  await ref.set({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+  return ref.id;
+}
+
+async function deleteNote(uid, personId, noteId) {
+  await _notesCol(uid, personId).doc(noteId).delete();
 }
 
 Object.assign(window, {
   FB_AUTH, FB_DB,
   signInWithGoogle, fbSignOut,
-  createTrip, joinTrip, getUserTrip, getTrip, removeTripMember,
+  getPeople, addPerson, updatePerson, deletePerson,
+  getNotes, addNote, deleteNote,
 });

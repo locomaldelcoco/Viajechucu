@@ -1,11 +1,11 @@
 {
-  "name": "Viajero",
-  "short_name": "Viajero",
-  "description": "Planificación grupal de viajes",
+  "name": "Mingo",
+  "short_name": "Mingo",
+  "description": "Tu memoria social de personas y vínculos",
   "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#FAF8F4",
-  "theme_color": "#1FA2D8",
+  "background_color": "#FAF8FF",
+  "theme_color": "#7C3AED",
   "orientation": "portrait-primary",
   "icons": [
     {

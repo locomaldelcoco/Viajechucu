@@ -1,20 +1,20 @@
-// app.jsx — Viajero PWA router
-const ViajeroApp = () => {
-  const [screen, setScreen]       = React.useState('home');
+// app.jsx — Mingo router
+const MingoApp = () => {
+  const [screen, setScreen]     = React.useState('home');
   const [navParams, setNavParams] = React.useState({});
-  const [authUser, setAuthUser]   = React.useState(undefined);
-  const [currentTrip, setCurrentTrip] = React.useState(undefined);
+  const [authUser, setAuthUser] = React.useState(undefined);
+  const [people, setPeople]     = React.useState([]);
 
   React.useEffect(() => {
     return FB_AUTH.onAuthStateChanged(async user => {
-      if (!user) { setAuthUser(null); setCurrentTrip(null); return; }
+      if (!user) { setAuthUser(null); setPeople([]); return; }
       setAuthUser(user);
       try {
-        const trip = await getUserTrip(user.uid);
-        setCurrentTrip(trip); // null si no tiene viaje
+        const list = await getPeople(user.uid);
+        setPeople(list);
       } catch(e) {
-        console.error('Error cargando viaje:', e);
-        setCurrentTrip(null); // sin viaje → muestra ScreenNewTrip
+        console.error('Error cargando personas:', e);
+        setPeople([]);
       }
     });
   }, []);
@@ -24,56 +24,45 @@ const ViajeroApp = () => {
     setScreen(s);
   }, []);
 
-  const onTripReady = React.useCallback(async (tripId) => {
-    const trip = await getTrip(tripId);
-    setCurrentTrip(trip);
-    setScreen('home');
-  }, []);
+  const onRefresh = React.useCallback(async () => {
+    if (!authUser) return;
+    try {
+      const list = await getPeople(authUser.uid);
+      setPeople(list);
+    } catch(e) { console.error(e); }
+  }, [authUser?.uid]);
 
-  const onTripUpdate = React.useCallback(updatedTrip => {
-    setCurrentTrip(updatedTrip);
-  }, []);
-
-  const loading = authUser === undefined || (authUser !== null && currentTrip === undefined);
+  const loading = authUser === undefined;
 
   if (loading) return (
-    <div style={{ minHeight:'100dvh', background:'#1b2030', display:'flex', alignItems:'center', justifyContent:'center' }}>
+    <div style={{ minHeight:'100dvh', background:PAL.bg, display:'flex', alignItems:'center', justifyContent:'center' }}>
       <GlobalStyles />
-      <div style={{ color:'#fff', opacity:0.4, fontSize:14, fontFamily:'Inter, sans-serif' }}>Cargando…</div>
+      <div style={{ color:PAL.inkSoft, fontSize:14, fontFamily:'Inter, sans-serif' }}>Cargando…</div>
     </div>
   );
 
   if (!authUser) return (
-    <div style={{ minHeight:'100dvh', background:'#1b2030', display:'flex', alignItems:'center', justifyContent:'center' }}>
+    <div style={{ minHeight:'100dvh', background:PAL.bg, display:'flex', alignItems:'center', justifyContent:'center' }}>
       <GlobalStyles />
       <Screen0_Login />
     </div>
   );
 
-  if (!currentTrip) return (
-    <div style={{ minHeight:'100dvh', background:'#1b2030', display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <GlobalStyles />
-      <ScreenNewTrip currentUser={authUser} onTripReady={onTripReady} />
-    </div>
-  );
+  const sharedProps = { navigate, authUser, people, onRefresh };
 
   const views = {
-    home:              <Screen1_Trips navigate={navigate} currentUser={authUser} currentTrip={currentTrip} />,
-    plan:              <Screen2_Plan  navigate={navigate} currentTrip={currentTrip} />,
-    'type-pick':       <Screen3_TypePick navigate={navigate} />,
-    form:              <Screen4_Form    navigate={navigate} />,
-    invite:            <Screen5_Invite  navigate={navigate} />,
-    posted:            <Screen6_Posted  navigate={navigate} />,
-    profile:           <Screen7_Profile navigate={navigate} currentUser={authUser} />,
-    group:             <Screen8_Group   navigate={navigate} currentUser={authUser} currentTrip={currentTrip} onTripUpdate={onTripUpdate} />,
-    'activity-detail': <Screen9_ActivityDetail navigate={navigate} {...navParams} />,
-    map:               <ScreenMap navigate={navigate} />,
+    home:        <Screen1_Home       {...sharedProps} />,
+    person:      <Screen2_Person     {...sharedProps} {...navParams} />,
+    'add-note':  <Screen3_AddNote    {...sharedProps} {...navParams} />,
+    'add-person':<Screen4_AddPerson  {...sharedProps} />,
+    reminders:   <Screen5_Reminders  {...sharedProps} />,
+    profile:     <Screen6_Profile    {...sharedProps} />,
   };
 
   return (
-    <div style={{ minHeight:'100dvh', background:'#1b2030', display:'flex', alignItems:'center', justifyContent:'center' }}>
+    <div style={{ minHeight:'100dvh', background:PAL.bg, display:'flex', alignItems:'center', justifyContent:'center' }}>
       <GlobalStyles />
-      {views[screen]}
+      {views[screen] || views['home']}
     </div>
   );
 };

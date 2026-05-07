@@ -135,8 +135,8 @@ const Icon = ({ name, size = 22, color = 'currentColor', stroke = 1.8 }) => {
 };
 
 // ─── Avatar ──────────────────────────────────────────────────
-const Avatar = ({ name = '', photoURL, size = 44 }) => {
-  const color  = colorForName(name);
+const Avatar = ({ name = '', photoURL, color: colorProp, size = 44 }) => {
+  const color  = colorProp || colorForName(name);
   const letter = (name || '?')[0].toUpperCase();
   const [err, setErr] = React.useState(false);
   return (
@@ -324,7 +324,7 @@ const Screen1_Home = ({ navigate, authUser, people, onRefresh }) => {
               return (
                 <Tap key={p.id} onTap={() => navigate('person', { personId: p.id })}>
                   <div style={{ display:'flex', alignItems:'center', gap:10, paddingTop:6 }}>
-                    <Avatar name={p.name} photoURL={p.photoURL} size={28} />
+                    <Avatar name={p.name} photoURL={p.photoURL} color={p.color} size={28} />
                     <span style={{ flex:1, fontSize:13, color:PAL.ink, fontWeight:500 }}>{p.name}</span>
                     <span style={{ fontSize:12, color:PAL.pink, fontWeight:600 }}>
                       {d === 0 ? '¡Hoy!' : d === 1 ? 'Mañana' : `En ${d} días`}
@@ -364,7 +364,7 @@ const PersonCard = ({ person, navigate }) => {
     <Tap onTap={() => navigate('person', { personId: person.id })}>
       <div style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px',
         borderRadius:16, background:PAL.white, boxShadow:`0 1px 4px ${PAL.ink}0d` }}>
-        <Avatar name={person.name} photoURL={person.photoURL} size={48} />
+        <Avatar name={person.name} photoURL={person.photoURL} color={person.color} size={48} />
         <div style={{ flex:1, minWidth:0 }}>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
             <span style={{ fontSize:16, fontWeight:700, color:PAL.ink }}>{person.name}</span>
@@ -452,7 +452,7 @@ const Screen2_Person = ({ navigate, authUser, personId, people, onRefresh }) => 
         </div>
 
         <div style={{ display:'flex', alignItems:'center', gap:16 }}>
-          <Avatar name={person.name} photoURL={person.photoURL} size={64} />
+          <Avatar name={person.name} photoURL={person.photoURL} color={person.color} size={64} />
           <div style={{ flex:1 }}>
             <h2 style={{ fontSize:22, fontWeight:800, color:PAL.ink, letterSpacing:-0.5 }}>{person.name}</h2>
             {person.birthday && (
@@ -726,6 +726,7 @@ const Screen3_AddNote = ({ navigate, authUser, people, personId: initPersonId, p
 const Screen4_AddPerson = ({ navigate, authUser, onRefresh }) => {
   const [name, setName]       = React.useState('');
   const [birthday, setBirthday] = React.useState('');
+  const [color, setColor]     = React.useState('');
   const [tagInput, setTagInput] = React.useState('');
   const [tags, setTags]         = React.useState([]);
   const [saving, setSaving]     = React.useState(false);
@@ -745,6 +746,7 @@ const Screen4_AddPerson = ({ navigate, authUser, onRefresh }) => {
         name: name.trim(),
         birthday: birthday || null,
         tags,
+        color: color || null,
         photoURL: null,
       });
       onRefresh?.();
@@ -765,12 +767,22 @@ const Screen4_AddPerson = ({ navigate, authUser, onRefresh }) => {
 
       <div style={{ flex:1, overflowY:'auto', padding:'24px 20px', display:'flex', flexDirection:'column', gap:20 }}>
 
-        {/* avatar preview */}
-        <div style={{ display:'flex', justifyContent:'center' }}>
-          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
-            <Avatar name={name || '?'} size={80} />
-            <span style={{ fontSize:12, color:PAL.inkSoft }}>El avatar se genera del nombre</span>
+        {/* avatar preview + color picker */}
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:14 }}>
+          <Avatar name={name || '?'} color={color || undefined} size={80} />
+          <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'center' }}>
+            {AVATAR_COLORS.map(c => (
+              <Tap key={c} onTap={() => setColor(color === c ? '' : c)}>
+                <div style={{ width:36, height:36, borderRadius:'50%', background:c,
+                  border: color === c ? `3px solid ${PAL.ink}` : '3px solid transparent',
+                  boxShadow: color === c ? `0 0 0 2px ${c}` : 'none',
+                  transition:'all .15s' }} />
+              </Tap>
+            ))}
           </div>
+          <span style={{ fontSize:12, color:PAL.inkSoft }}>
+            {color ? 'Color seleccionado' : 'Tocá un color para asignar uno'}
+          </span>
         </div>
 
         {/* name */}
@@ -860,7 +872,7 @@ const Screen5_Reminders = ({ navigate, authUser, people }) => {
           <Tap key={p.id} onTap={() => navigate('person', { personId: p.id })}>
             <div style={{ display:'flex', alignItems:'center', gap:14, padding:'13px 16px',
               borderRadius:16, background:PAL.white, boxShadow:`0 1px 4px ${PAL.ink}0d` }}>
-              <Avatar name={p.name} photoURL={p.photoURL} size={44} />
+              <Avatar name={p.name} photoURL={p.photoURL} color={p.color} size={44} />
               <div style={{ flex:1 }}>
                 <span style={{ fontSize:15, fontWeight:700, color:PAL.ink }}>{p.name}</span>
                 <div style={{ fontSize:13, color:PAL.inkMid, marginTop:2 }}>{formatBirthday(p.birthday)}</div>
